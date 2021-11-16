@@ -85,6 +85,15 @@ if(bXLSLoad && ~bMatFileExists)
                             find(strcmpi(headers,'pfspdactval')==1)
                             find(strcmpi(headers,'hetubetemp')==1)]';
 
+%     nImportantColumns = [ find(strcmpi(headers,'barefibrediadisplay')==1)
+%                             find(strcmpi(headers,'tenncmv')==1) % TODO(gcfchen): why was this commented
+%                             find(strcmpi(headers,'rampupslopevalflt')==1)
+%                             find(strcmpi(headers,'cpspdactval')==1)
+%                             find(strcmpi(headers,'frnpwrmv')==1) % TODO(gcfchen): why was this commented
+%                             find(strcmpi(headers,'pfspdactval')==1)
+%                             find(strcmpi(headers,'hetubetemp')==1)]';
+
+    disp('Using following important columns.')
     xlsColNum2Str(nImportantColumns)
 
     figure(100)

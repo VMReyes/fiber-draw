@@ -11,22 +11,22 @@ function [Y,Y_filt,x,sample_indexfilt, meanY, meanX]  = stl_prep_trainingdata_al
 
 %% first attempt at auto regress fit in a good range of data -- lots to do here
 
-if(0)
-    %nWhichBatch = 25 ; nWhichSub   = 7;
-    %nWhichBatch = 26 ; nWhichSub   = 2; %HERE for 48
-    nWhichBatch = 31 ; nWhichSub   = 2; %HERE for 51
-    nWhichBatch = 3 ; nWhichSub   = -1; 
-
-    %select and order columns of importance.
-    nImportantColumns        = [6 16 15 10   22    26 29]; %removing 11 it is an output
-    %nImportantColumns       = [6 16 15 10   22 11 26 29];
-    fltLEN                  = 21;
-    bPlot                   = 1;
-    bPlotAllSelectedColumns = 1;
-
-    bMeanRemove             = 0;
-
-end
+% if(0)
+%     %nWhichBatch = 25 ; nWhichSub   = 7;
+%     %nWhichBatch = 26 ; nWhichSub   = 2; %HERE for 48
+%     nWhichBatch = 31 ; nWhichSub   = 2; %HERE for 51
+%     nWhichBatch = 3 ; nWhichSub   = -1; 
+% 
+%     %select and order columns of importance.
+%     nImportantColumns        = [6 16 15 10   22    26 29]; %removing 11 it is an output
+%     %nImportantColumns       = [6 16 15 10   22 11 26 29];
+%     fltLEN                  = 21;
+%     bPlot                   = 1;
+%     bPlotAllSelectedColumns = 1;
+% 
+%     bMeanRemove             = 0;
+% 
+% end
 
 % time windor for all extended regions within UL bounds
 [timewindow] = func_stl_alltimewindow(BatchInfo,nWhichBatch);
@@ -144,9 +144,9 @@ end
 
         %assuming that smoothing is turned off on the time window, 
         %this should be zero:
-        if(0)
-            plot(dataaFIN-dataaFIN2)
-        end
+%         if(0)
+%             plot(dataaFIN-dataaFIN2)
+%         end
     end
     
 
@@ -154,15 +154,15 @@ end
     [mRR,nRR] = size(dataaFIN);
 
     %plot all selected columns for selected batch and subbatch
-    if(bPlot || bPlotAllSelectedColumns)
-        figure
-        for ii = 1:nRR
-            subplot(nRR,1,ii)
-            plot(dataaFIN(:,ii))
-            tit = STRDEF{nImportantColumns(ii)};
-            title(tit)
-        end
-    end
+%     if(bPlot || bPlotAllSelectedColumns)
+%         figure
+%         for ii = 1:nRR
+%             subplot(nRR,1,ii)
+%             plot(dataaFIN(:,ii))
+%             tit = STRDEF{nImportantColumns(ii)};
+%             title(tit)
+%         end
+%     end
 %     %plot all selected columns for selected batch and subbatch
 %     if(bPlot || bPlotAllSelectedColumns)
 %         figure
@@ -173,12 +173,13 @@ end
 %             title(tit)
 %         end
 %     end
-
     %% OUTPUT - first column is the output (i.e. BFD)
-    Y = dataaFIN(:,1);
+    Y = horzcat(dataaFIN(1:length(dataaFIN)-1,[1,2]), dataaFIN(2:length(dataaFIN), [6,7]));
     %low pass filter on the noisey data
-    Ypadd   = [Y(1)*ones(1,floor(fltLEN/2)) Y' Y(end)*ones(1,floor(fltLEN/2))]';
-    [Y_filt,sample_indexfilt] = func_simplefilter(Ypadd,fltLEN,'valid');
+    % TODO(gcfchen): might be used but commented out for now
+%     Ypadd   = [Y(1)*ones(1,floor(fltLEN/2)) Y' Y(end)*ones(1,floor(fltLEN/2))]';
+%     [Y_filt,sample_indexfilt] = func_simplefilter(Ypadd,fltLEN,'valid');
+Y_filt = Y;
 
     if(bPlot)
         figure
@@ -198,7 +199,7 @@ end
         Y_filt      = Y_filt    - meanY;
     end
     %% INPUTS
-    x = dataaFIN(:,[2:end]);
+    x = dataaFIN(1:length(dataaFIN)-1,[4,5,6,7]);
     % mean remove on all inputs
     meanX = mean(x);
     if(bMeanRemove)
@@ -210,8 +211,11 @@ end
 %     x       = x(n2trim:(end-n2trim),:);
 %     Y       = Y(n2trim:(end-n2trim),:);
 %     Y_filt  = Y_filt(n2trim:(end-n2trim),:);
-    sample_indexfilt = sample_indexfilt(n2trim:(end-n2trim));
-
+    
+    sample_indexfilt = 0;
+    % TODO(gcfchen): next line was originally uncommented
+%     sample_indexfilt = sample_indexfilt(n2trim:(end-n2trim));
+    
     %% Create Data Structure - for training  Y and X
 %     dsiddata = iddata(Y,x,0.005);
 %     dsiddata_filt = iddata(Y_filt,x,0.005);

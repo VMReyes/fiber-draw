@@ -1,9 +1,9 @@
 %
 %extracted from run_trainon_allpreforms_rev7_2lstm_withnewdataload_TEMP
+clear; clc; close all; 
+strDataPath         = 'C:\Users\vmres\Documents\6.RA\fiber-draw\MIT_DrawData_48and51\';
 
-strDataPath         = 'E:\Dropbox (SquareCircleMITtoo)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
-
-strOutputPath       = 'E:\Dropbox (SquareCircleMITtoo)\_y_Code\zzResultsFolder\alldatatrain\';
+strOutputPath       = 'C:\Users\vmres\Documents\6.RA\fiber-draw\alldatatrainfromonefile\';
 
 % filenamebasearray{1} = 'DrawData_Tower51_2020-12-01_to2020-12-08';  
 % filenamebasearray{2} = 'DrawData_Tower51_2020-12-08_to2020-12-15';  
@@ -24,11 +24,13 @@ filenamebasearray{1} = 'DrawData_Tower48_2020-12-01_to2020-12-08';
 %filenamebasearray{1} = 'DrawData_Tower48_2021-03-09_to2021-03-16';  
 %filenamebasearray{1} = 'DrawData_Tower48_2021-03-16_to2021-03-23';  
 
-PrefltLEN_array = [1 5 7]; 
+% PrefltLEN_array = [1 5 7]; 
+PrefltLEN_array = [5];
 
 for fn = 1:length(filenamebasearray)
     filenamebase = filenamebasearray{fn};
     for PrefltLEN = PrefltLEN_array
+        PrefltLEN
         %% stl_load_parse_allt
         bXLSLoad                                                = 1;
         bPlotAll                                                = 0;
@@ -86,7 +88,8 @@ for fn = 1:length(filenamebasearray)
         %%
         %bRNNnarx = 1;
 
-        if(~bLocked)
+%         if(~bLocked)
+        if (1)
 
             bSubBatchCounter = 0;
 
@@ -101,7 +104,7 @@ for fn = 1:length(filenamebasearray)
 
                 %select and order columns of importance.
                 %nImportantColumns        = [6 16 15 10   22    26 29]; %removing 11 it is an output
-                nImportantColumns        = [1 2 3 4 5 6 7]; 
+                nImportantColumns        = [1 2 3 4 5 6 7];
                 fltLEN                  = 21;
                 bPlot                   = 0;
                 bPlotAllSelectedColumns = 1;
@@ -176,31 +179,43 @@ for fn = 1:length(filenamebasearray)
             % 
             % Create the network architecture.
 
-            numResponses = 1;
+            numResponses = 4; % TODO(gcfchen): this was originally 1, modified to be 4
             featureDimension = rrr; %1;
             %
             %numHiddenUnits = 100;
             maxEpochs       = nnin_maxEpochs; %150 ; %150; %500; %1000
             miniBatchSize   = nnin_miniBatchSize; %200;%200;
+                         
+%             lgraph = layerGraph
+%             tempLayers = sequenceInputLayer(featureDimension, "Name", "sequence");
+%             lgraph = addLayers(lgraph, tempLayers);
+%             
+%             tempLayers = lstmLayer(128, "Name", "lstm_2");
+%             lgraph = addLayers(lgraph, tempLayers);
+%             
+%             tempLayers = lstmLayer(128, "Name", "lstm_3");
+%             lgraph = addLayers(lgraph, tempLayers);
+%             
+%             tempLayers = lstmLayer(128, "Name", "lstm_1");
+%             lgraph = addLayers(lgraph, tempLayers);
+%             
+%             tempLayers = [
+%                 concatenationLayer(1,3, "Name", "concat")
+%                 fullyConnectedLayer(numResponses, "Name", "fc")
+%                 regressionLayer("Name", "regressionoutput")];
+%             lgraph = addLayers(lgraph,tempLayers);
+%             clear tempLayers;
+%             lgraph = connectLayers(lgraph,"sequence","lstm_2");
+%             lgraph = connectLayers(lgraph,"sequence","lstm_3");
+%             lgraph = connectLayers(lgraph,"sequence","lstm_1");
+%             lgraph = connectLayers(lgraph,"lstm_2","concat/in2");
+%             lgraph = connectLayers(lgraph,"lstm_3","concat/in3");
+%             lgraph = connectLayers(lgraph,"lstm_1","concat/in1");
 
-            Networklayers = [sequenceInputLayer(featureDimension) ...
-                lstmLayer(350) ...
-                fullyConnectedLayer(numResponses) ...
-                regressionLayer];
-%             Networklayers = [sequenceInputLayer(featureDimension) ...
-%                 lstmLayer(100) ...
-%                 lstmLayer(50) ...
-%                 fullyConnectedLayer(numResponses) ...
-%                 regressionLayer];
-                %lstmLayer(50) ...
-
-            % 
-            % Networklayers = [sequenceInputLayer(featureDimension) ...
-            %     lstmLayer(numHiddenUnits) ...
-            %     lstmLayer(numHiddenUnits) ...
-            %     fullyConnectedLayer(numResponses) ...
-            %     regressionLayer];
-
+           Networklayers = [sequenceInputLayer(featureDimension) ...
+               lstmLayer(100) ...
+               fullyConnectedLayer(numResponses) ...
+               regressionLayer];
             %% 
             % The initial learning rate impacts the success of the network. Using an initial 
             % learning rate that is too high results in high gradients, which lead to longer 
@@ -243,12 +258,13 @@ for fn = 1:length(filenamebasearray)
             trainedNetworkModel = trainNetwork(XTrainTRANSPOSE_fromONEfile,YTrainTRANSPOSE_fromONEfile,Networklayers,options);
 
 
-            clear XTrainTRANSPOSE_ARRAY;
-            clear YTrainTRANSPOSE_ARRAY;
-            clear trainedNetworkModel_ARRAY;
-            trainedNetworkModel_ARRAY{1}    = trainedNetworkModel;
-            XTrainTRANSPOSE_ARRAY{1}        = XTrainTRANSPOSE_fromONEfile;
-            YTrainTRANSPOSE_ARRAY{1}        = YTrainTRANSPOSE_fromONEfile;
+%             clear XTrainTRANSPOSE_ARRAY;
+%             clear YTrainTRANSPOSE_ARRAY;
+%             clear trainedNetworkModel_ARRAY;
+
+            %trainedNetworkModel_ARRAY{1}    = trainedNetworkModel;
+            %XTrainTRANSPOSE_ARRAY{1}        = XTrainTRANSPOSE_fromONEfile;
+            %YTrainTRANSPOSE_ARRAY{1}        = YTrainTRANSPOSE_fromONEfile;
 
 
         %     tempstr = ['rev7_' filenamebase '_trALL' '_maxE' num2str(maxEpochs) '_mx' num2str(subbatchMaxLen) '_drop' num2str(nnin_LearnRateDropPeriod) '_lstm100lstm50' '_filter' num2str(PrefltLEN) '.mat'];
@@ -263,27 +279,19 @@ for fn = 1:length(filenamebasearray)
     end
 
 end
-    
-    
-    
-% if(0)
-%     flname = ['trained_on_allpreforms_tower51_meanremove' num2str(bMeanRemove) '_min' num2str(loBFD*100) '_max' num2str(hiBFD*100)]
-%     save(flname)
-%     
-%     flname = ['trained_on_allpreformsRNN_tower51_meanremove' num2str(bMeanRemove) '_min' num2str(loBFD*100) '_max' num2str(hiBFD*100)]
-%     save(flname)
-%     
-%     
-%     
-%     flname = ['trained_on_allpreforms_tower48_meanremove' num2str(bMeanRemove) '_min' num2str(loBFD*100) '_max' num2str(hiBFD*100)]
-%     save(flname)
-%     
-%     
-%     
-%     flname = ['trained_on_allpreformsRNN_tower48_meanremove' num2str(bMeanRemove) '_min' num2str(loBFD*100) '_max' num2str(hiBFD*100)]
-%     save(flname)
-%     
-%     
-% end
+%% plot
+close all;
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
+set(groot, 'defaultLegendInterpreter','latex');
+set(groot, 'defaultTextInterpreter','latex');
 
+y_pred = trainedNetworkModel.predict(x_sub');
+y_pred = y_pred';
+figure; plot(Y_sub(:,1)); hold on; plot(y_pred(:,1),'r'); 
+legend({'Data','Prediction'});
+
+stl_plottrainingresults_FFTPSD_function(Y_sub(:,1), Y_sub(:,1), y_pred(:,1), y_pred(:,1));
+
+figure(3000); xlim([0 1]); ylim([-5 4]); 
+figure(3001); grid minor;  
 
