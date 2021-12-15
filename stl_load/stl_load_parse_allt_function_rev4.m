@@ -50,19 +50,19 @@ STRDEF{7} = 'hetubetemp';
 
 %%
 %check to see of mat files exist
-bMatFileExists = 0;
-iindperiod = strfind(xls_file,'.');
-if(~isempty(iindperiod))
-    matfilename = [xls_file(1:(iindperiod-1)) '.mat'];
-    nexist = exist(matfilename);
-    if(nexist == 2)
-        bMatFileExists = 1
-    end
-end
+% bMatFileExists = 0;
+% iindperiod = strfind(xls_file,'.');
+% if(~isempty(iindperiod))
+%     matfilename = [xls_file(1:(iindperiod-1)) '.mat'];
+%     nexist = exist(matfilename);
+%     if(nexist == 2)
+%         bMatFileExists = 1
+%     end
+% end
 
 %%
 
-if(bXLSLoad && ~bMatFileExists)
+if(1)
     %%
 
     % strDataPath     = 'E:\Dropbox (SquareCircleMITtoo)\minigroup_mit_sterlite\from Sterlite\data\';
@@ -73,7 +73,7 @@ if(bXLSLoad && ~bMatFileExists)
 %     xls_file        = 'DrawData_Tower48_2021-03-16_to2021-03-23.csv';
 
 
-    strfullpth      = [strDataPath xls_file];
+    strfullpth      = strDataPath + filesep + xls_file;
     headers         = readcell(strfullpth,'Range','1:1');
 
     %which columns
