@@ -2,40 +2,54 @@
 % get data from the next week
 % run inference of 1, 5, 7 on it
 % plot inferences against actual
-[model_1, X_1, Y_1] = hacking_2021_07_20_loadalldatafromfile4training("C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\DrawData_Tower48_2020-12-01_to2020-12-08.csv", ...
-                                                          "C:\Users\Victor\Desktop\fiber-draw\alldatatrainfromonefile", ...
-                                                          1);
-save("alldatatrainfromonefile\model.mat", "model_1")
-[model_5, X_5, Y_5] = hacking_2021_07_20_loadalldatafromfile4training("C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\DrawData_Tower48_2020-12-01_to2020-12-08.csv", ...
-                                                          "C:\Users\Victor\Desktop\fiber-draw\alldatatrainfromonefile", ...
-                                                          5);
-[model_7, X_7, Y_7] = hacking_2021_07_20_loadalldatafromfile4training("C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\DrawData_Tower48_2020-12-01_to2020-12-08.csv", ...
-                                                          "C:\Users\Victor\Desktop\fiber-draw\alldatatrainfromonefile", ...
-                                                          7);
-[model_test_1, XTest_1, YTest_1] = hacking_2021_07_20_loadalldatafromfile4training("C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\DrawData_Tower48_2020-12-08_to2020-12-15.csv", ...
-                                                          "C:\Users\Victor\Desktop\fiber-draw\alldatatrainfromonefile", ...
-                                                          1);
-close all;
-models = {model_1, model_5, model_7, model_test_1};
-input_set = {X_1, X_5, X_7, XTest_1};
-output_set = {Y_1, Y_5, Y_7, YTest_1};
-error_matrix = zeros(4,4);
+dataFolder = "C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\";
+filePattern = fullfile(dataFolder, '*.csv'); % Change to whatever pattern you need.
+filenames = dir(filePattern);
+model_names = {};
+models = {};
+X_data = {};
+Y_data = {};
+data_names = {};
+for k = 1 : 5
+    filename = filenames(k).name;
+    fullFilename = fullfile(filenames(k).folder, filename);
+    fullFilename = convertCharsToStrings(fullFilename);
+    fprintf(1, 'Now reading %s\n', fullFilename);
+    filter_lens = {1, 5, 7};
+    for i = 1:3
+        filter_len = filter_lens{i};
+        [model, X, Y] = hacking_2021_07_20_loadalldatafromfile4training(fullFilename, ...
+        "C:\Users\Victor\Desktop\fiber-draw\alldatatrainfromonefile", ...
+        filter_len);
+        X_data{end+1} = X;
+        Y_data{end+1} = Y;
+        models{end+1} = model;
+        model_names{end+1} = fullFilename + "_model_" + int2str(filter_len);
+        data_names{end+1} = fullFilename + "_filtered_" + int2str(filter_len);
+        close all;
+    end
+    close all;
+end
+error_matrix = zeros(15, 15);
 for i=1:length(models)
     model = models{i};
-    for j=1:length(input_set)
-        inputs = input_set{j};
+    for j=1:length(X_data)
+        inputs = X_data{j};
         inputs_batch = inputs';
-        outputs = output_set{j};
-        
-        model_prediction = model.predict(inputs_batch);
-        
-        model_prediction_transpose = model_prediction';
-        
-        error_matrix(i,j) = mse(model_prediction_transpose(:,1), outputs(:,1));
+        outputs = Y_data{j};
+        predictions = {};
+        mse_total = 0.0;
+        for b=1:length(inputs_batch)
+            model = resetState(model);
+            [model, model_prediction] = predictAndUpdateState(model, inputs_batch(b));
+            prediction = model_prediction{1}(1,:);
+            target = outputs{b}(1,:); % selects bfd
+            mse_total = mse_total + mse(prediction, target);
+        end
+        n_batches = length(inputs_batch)
+        error_matrix(i,j) = mse_total / n_batches;
     end
 end
-
-
 % close all;
 % set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
 % set(groot, 'defaultLegendInterpreter','latex');
