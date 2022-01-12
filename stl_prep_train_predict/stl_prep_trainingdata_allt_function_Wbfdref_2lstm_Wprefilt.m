@@ -9,24 +9,6 @@ function [Y,Y_filt,x,sample_indexfilt, meanY, meanX]  = stl_prep_trainingdata_al
                                                     bMeanRemove, ... 
                                                 PrefltLEN)
 
-%% first attempt at auto regress fit in a good range of data -- lots to do here
-
-if(0)
-    %nWhichBatch = 25 ; nWhichSub   = 7;
-    %nWhichBatch = 26 ; nWhichSub   = 2; %HERE for 48
-    nWhichBatch = 31 ; nWhichSub   = 2; %HERE for 51
-    nWhichBatch = 3 ; nWhichSub   = -1; 
-
-    %select and order columns of importance.
-    nImportantColumns        = [6 16 15 10   22    26 29]; %removing 11 it is an output
-    %nImportantColumns       = [6 16 15 10   22 11 26 29];
-    fltLEN                  = 21;
-    bPlot                   = 1;
-    bPlotAllSelectedColumns = 1;
-
-    bMeanRemove             = 0;
-
-end
 
 % time windor for all extended regions within UL bounds
 [timewindow] = func_stl_alltimewindow(BatchInfo,nWhichBatch);
@@ -91,27 +73,6 @@ end
                 %dataaFIN(:,cc) = dataaBIR(:,cc);
                 dataaFIN2(tempIndsGAP,cc) = ones(length(tempIndsGAP),1)*INTERPvals(cc);
             end
-
-            %here hold end
-    %         INTERPvals = dataa4oneSUB(end,:);
-    %         for cc = 1:length(nImportantColumns)
-    %             %dataaFIN(:,cc) = dataaBIR(:,cc);
-    %             dataaFIN2(tempIndsGAP,cc) = ones(length(tempIndsGAP),1)*INTERPvals(cc);
-    %         end
-
-    %         %here from end to start - straight line
-    %         dataa4oneSUBPLUS            = dataaBIR(tempIndsPLUS,:);  
-    %         for cc = 1:length(nImportantColumns)
-    %             %dataaFIN(:,cc) = dataaBIR(:,cc);
-    %             A = dataa4oneSUB(end,cc);
-    %             B = dataa4oneSUBPLUS(1,cc);
-    % 
-    %             st = (B-A)/( length(tempIndsGAP)-1);
-    %             INTERPvalsLINE = A:st:B;
-    %             INTERPvalsLINE = INTERPvalsLINE(:); %force to single column
-    %             dataaFIN2(tempIndsGAP,cc) = INTERPvalsLINE;
-    %         end
-
         end
         %lat subbatch
         sb = numsubbatch
@@ -126,9 +87,6 @@ end
             %dataaFIN(:,cc) = dataaBIR(:,cc);
             dataaFIN2(tempIndsGAP,cc) = ones(length(tempIndsGAP),1)*INTERPvals(cc);
         end
-
-        %
-        %
         dataaFIN = dataaFIN2;
     end
     
@@ -163,16 +121,6 @@ end
             title(tit)
         end
     end
-%     %plot all selected columns for selected batch and subbatch
-%     if(bPlot || bPlotAllSelectedColumns)
-%         figure
-%         for ii = 1:nRR
-%             subplot(nRR,1,ii)
-%             plot(dataaFIN2(:,ii))
-%             tit = STRDEF{nImportantColumns(ii)};
-%             title(tit)
-%         end
-%     end
 
     %% OUTPUT - first column is the output (i.e. BFD)
     Y = dataaFIN(:,1);
