@@ -1,9 +1,9 @@
 %
 %extracted from run_trainon_allpreforms_rev7_2lstm_withnewdataload_TEMP
 clear; clc; close all; 
-strDataPath         = 'C:\Users\vmres\Documents\6.RA\fiber-draw\MIT_DrawData_48and51\';
+strDataPath         = 'C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\';
 
-strOutputPath       = 'C:\Users\vmres\Documents\6.RA\fiber-draw\alldatatrainfromonefile\';
+strOutputPath       = 'C:\Users\Victor\Desktop\fiber-draw\alldatatrainfromonefile\';
 
 % filenamebasearray{1} = 'DrawData_Tower51_2020-12-01_to2020-12-08';  
 % filenamebasearray{2} = 'DrawData_Tower51_2020-12-08_to2020-12-15';  
@@ -25,7 +25,7 @@ filenamebasearray{1} = 'DrawData_Tower48_2020-12-01_to2020-12-08';
 %filenamebasearray{1} = 'DrawData_Tower48_2021-03-16_to2021-03-23';  
 
 % PrefltLEN_array = [1 5 7]; 
-PrefltLEN_array = [5];
+PrefltLEN_array = [1 5 7];
 
 for fn = 1:length(filenamebasearray)
     filenamebase = filenamebasearray{fn};
@@ -104,11 +104,11 @@ for fn = 1:length(filenamebasearray)
 
                 %select and order columns of importance.
                 %nImportantColumns        = [6 16 15 10   22    26 29]; %removing 11 it is an output
-                nImportantColumns        = [1 2 3 4 5 6 7];
+                nImportantColumns        = [1 2 3 4 5 6];
                 fltLEN                  = 21;
                 bPlot                   = 0;
                 bPlotAllSelectedColumns = 1;
-                bMeanRemove             = 1;
+                bMeanRemove             = 0;
 
                 XTrainTRANSPOSE = {};
                 YTrainTRANSPOSE = {};
@@ -179,7 +179,7 @@ for fn = 1:length(filenamebasearray)
             % 
             % Create the network architecture.
 
-            numResponses = 4; % TODO(gcfchen): this was originally 1, modified to be 4
+            numResponses = 2; % TODO(gcfchen): this was originally 1, modified to be 4
             featureDimension = rrr; %1;
             %
             %numHiddenUnits = 100;

@@ -92,26 +92,6 @@ function [Y,Y_filt,x,sample_indexfilt, meanY, meanX]  = stl_prep_trainingdata_al
                 dataaFIN2(tempIndsGAP,cc) = ones(length(tempIndsGAP),1)*INTERPvals(cc);
             end
 
-            %here hold end
-    %         INTERPvals = dataa4oneSUB(end,:);
-    %         for cc = 1:length(nImportantColumns)
-    %             %dataaFIN(:,cc) = dataaBIR(:,cc);
-    %             dataaFIN2(tempIndsGAP,cc) = ones(length(tempIndsGAP),1)*INTERPvals(cc);
-    %         end
-
-    %         %here from end to start - straight line
-    %         dataa4oneSUBPLUS            = dataaBIR(tempIndsPLUS,:);  
-    %         for cc = 1:length(nImportantColumns)
-    %             %dataaFIN(:,cc) = dataaBIR(:,cc);
-    %             A = dataa4oneSUB(end,cc);
-    %             B = dataa4oneSUBPLUS(1,cc);
-    % 
-    %             st = (B-A)/( length(tempIndsGAP)-1);
-    %             INTERPvalsLINE = A:st:B;
-    %             INTERPvalsLINE = INTERPvalsLINE(:); %force to single column
-    %             dataaFIN2(tempIndsGAP,cc) = INTERPvalsLINE;
-    %         end
-
         end
         %lat subbatch
         sb = numsubbatch
@@ -174,7 +154,7 @@ function [Y,Y_filt,x,sample_indexfilt, meanY, meanX]  = stl_prep_trainingdata_al
 %         end
 %     end
     %% OUTPUT - first column is the output (i.e. BFD)
-    Y = horzcat(dataaFIN(1:length(dataaFIN)-1,[1,2]), dataaFIN(2:length(dataaFIN), [6,7]));
+    Y = dataaFIN(1:length(dataaFIN),[1,4]);
     %low pass filter on the noisey data
     % TODO(gcfchen): might be used but commented out for now
 %     Ypadd   = [Y(1)*ones(1,floor(fltLEN/2)) Y' Y(end)*ones(1,floor(fltLEN/2))]';
@@ -199,7 +179,7 @@ Y_filt = Y;
         Y_filt      = Y_filt    - meanY;
     end
     %% INPUTS
-    x = dataaFIN(1:length(dataaFIN)-1,[4,5,6,7]);
+    x = dataaFIN(1:length(dataaFIN),[2,3,5,6]);
     % mean remove on all inputs
     meanX = mean(x);
     if(bMeanRemove)
