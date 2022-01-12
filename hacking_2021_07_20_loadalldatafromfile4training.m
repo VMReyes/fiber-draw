@@ -1,9 +1,9 @@
 %
 %extracted from run_trainon_allpreforms_rev7_2lstm_withnewdataload_TEMP
 
-strDataPath         = 'E:\Dropbox (SquareCircleMITtoo)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
+strDataPath         = 'C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\';
 
-strOutputPath       = 'E:\Dropbox (SquareCircleMITtoo)\_y_Code\zzResultsFolder\alldatatrain\';
+strOutputPath       = 'C:\Users\Victor\Desktop\fiber-draw\alldatatrain\';
 
 % filenamebasearray{1} = 'DrawData_Tower51_2020-12-01_to2020-12-08';  
 % filenamebasearray{2} = 'DrawData_Tower51_2020-12-08_to2020-12-15';  
@@ -144,11 +144,6 @@ for fn = 1:length(filenamebasearray)
             XTrainTRANSPOSE_fromONEfile = [XTrainTRANSPOSE_ARRAY{:}];
             YTrainTRANSPOSE_fromONEfile = [YTrainTRANSPOSE_ARRAY{:}];
 
-            %return
-
-
-
-
             %% Train on all data
 
             [rrr,ccc] = size(XTrainTRANSPOSE_fromONEfile{1});
@@ -184,7 +179,7 @@ for fn = 1:length(filenamebasearray)
             miniBatchSize   = nnin_miniBatchSize; %200;%200;
 
             Networklayers = [sequenceInputLayer(featureDimension) ...
-                lstmLayer(350) ...
+                lstmLayer(100) ...
                 fullyConnectedLayer(numResponses) ...
                 regressionLayer];
 %             Networklayers = [sequenceInputLayer(featureDimension) ...
@@ -264,7 +259,23 @@ for fn = 1:length(filenamebasearray)
 
 end
     
-    
+%% plot
+close all;
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
+set(groot, 'defaultLegendInterpreter','latex');
+set(groot, 'defaultTextInterpreter','latex');
+trainedNetworkModel = trainedNetworkModel.resetState();
+y_pred = trainedNetworkModel.predict(x_sub');
+Y_sub = Y_sub;
+y_pred = y_pred';
+figure; plot(Y_sub(:,1)); hold on; plot(y_pred(:,1),'r'); 
+legend({'Data','Prediction'});
+
+stl_plottrainingresults_FFTPSD_function(Y_sub(:,1), Y_sub(:,1), y_pred(:,1), y_pred(:,1));
+
+
+figure(3000); xlim([0 1]); ylim([-5 4]); 
+figure(3001); grid minor;      
     
 % if(0)
 %     flname = ['trained_on_allpreforms_tower51_meanremove' num2str(bMeanRemove) '_min' num2str(loBFD*100) '_max' num2str(hiBFD*100)]
