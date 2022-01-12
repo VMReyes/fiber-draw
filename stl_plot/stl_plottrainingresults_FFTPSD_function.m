@@ -27,7 +27,9 @@ end
 dTsampled = .5;
 
 %% FFT and PSD
-
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
+set(groot, 'defaultLegendInterpreter','latex');
+set(groot, 'defaultTextInterpreter','latex');
 
     %take the FFT
     FY = fft(Y);
@@ -59,10 +61,10 @@ dTsampled = .5;
     if(bUseSubplot)
         subplot(subplot_mnp(1), subplot_mnp(2), subplot_mnp(3))
     end
-    plot(frq_discretes,log10(abs(FY_s).^2),'k');            strlistlegend{length(strlistlegend)+1} = 'FY_s';
+    plot(frq_discretes,log10(abs(FY_s).^2),'k');            strlistlegend{length(strlistlegend)+1} = 'Data';
     hold on
   %  stem(frq_discretes,log10(abs(FY_filt_s).^2),'g');       strlistlegend{length(strlistlegend)+1} = 'FY_filt_s';
-    plot(frq_discretes,log10(abs(FYpredict_s).^2),'r');     strlistlegend{length(strlistlegend)+1} = 'FYpredict_s';
+    plot(frq_discretes,log10(abs(FYpredict_s).^2),'r');     strlistlegend{length(strlistlegend)+1} = 'Prediction';
   %  stem(frq_discretes,log10(abs(FYpredict_filt_s).^2),'b');        strlistlegend{length(strlistlegend)+1} = 'FYpredict_filt_s';
     hold off
     legend(strlistlegend)
@@ -71,7 +73,7 @@ dTsampled = .5;
   	%axis([0 1 -.1 max(log10(abs(FY_s).^2))])
   	axis([0 1 -.1  max([   max(log10(abs(FY_s).^2))   max(log10(abs(FYpredict_s).^2))   ])   ])
     % title('Power Spectrum:  FFT^2  vs Freq (-pi to pi)')
-    title(['Power Spectrum. ' strTitlePart ': Batch ' num2str(nWhichBatch) '.  Sub ' num2str(nWhichSub) '. ']);
+    title('Power Spectrum');
    
     %
     % Plot resutls of Welch
@@ -80,10 +82,10 @@ dTsampled = .5;
     if(bUseSubplot)
         subplot(subplot_mnp(1), subplot_mnp(2), subplot_mnp(3))
     end
-    plot(WW/pi,fmag1(PY),'k');            strlistlegend{length(strlistlegend)+1} = 'PY';
+    plot(WW/pi,fmag1(PY),'k');            strlistlegend{length(strlistlegend)+1} = 'Data';
     hold on
   %  plot(WW,fmag1(PY_filt),'g');       strlistlegend{length(strlistlegend)+1} = 'PY_filt';
-    plot(WW/pi,fmag1(PYpredict),'r');     strlistlegend{length(strlistlegend)+1} = 'PYpredict';
+    plot(WW/pi,fmag1(PYpredict),'r');     strlistlegend{length(strlistlegend)+1} = 'Prediction';
   %  plot(WW,fmag1(PYpredict_filt),'b');        strlistlegend{length(strlistlegend)+1} = 'PYpredict_filt';
     hold off
     legend(strlistlegend)
@@ -92,5 +94,4 @@ dTsampled = .5;
   	axis([0 1 0 max(fmag1(PY))])
   	%axis([-.25 .25 -.1 max(log10(abs(FY_s).^2))])
     % title('Power Spectrum:  FFT^2  vs Freq (-pi to pi)')
-    title(['Welch Power Spectrum. ' strTitlePart ': Batch ' num2str(nWhichBatch) '.  Sub ' num2str(nWhichSub) '. ']);
-
+    title('Welch Power Spectrum');
