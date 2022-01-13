@@ -1,6 +1,3 @@
-%
-%extracted from run_trainon_allpreforms_rev7_2lstm_withnewdataload_TEMP
-
 strDataPath         = 'C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\';
 
 strOutputPath       = 'C:\Users\Victor\Desktop\fiber-draw\alldatatrain\';
