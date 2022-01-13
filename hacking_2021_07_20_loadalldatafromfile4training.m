@@ -24,7 +24,7 @@ filenamebasearray{1} = 'DrawData_Tower48_2020-12-01_to2020-12-08';
 %filenamebasearray{1} = 'DrawData_Tower48_2021-03-09_to2021-03-16';  
 %filenamebasearray{1} = 'DrawData_Tower48_2021-03-16_to2021-03-23';  
 
-PrefltLEN_array = [1 5 7]; 
+PrefltLEN_array = [1]; 
 
 for fn = 1:length(filenamebasearray)
     filenamebase = filenamebasearray{fn};
@@ -88,7 +88,7 @@ for fn = 1:length(filenamebasearray)
                 fltLEN                  = 21;
                 bPlot                   = 0;
                 bPlotAllSelectedColumns = 1;
-                bMeanRemove             = 1;
+                bMeanRemove             = 0;
 
                 XTrainTRANSPOSE = {};
                 YTrainTRANSPOSE = {};
@@ -155,7 +155,7 @@ for fn = 1:length(filenamebasearray)
             maxEpochs       = nnin_maxEpochs; %150 ; %150; %500; %1000
             miniBatchSize   = nnin_miniBatchSize; %200;%200;
 
-            Networklayers = [sequenceInputLayer(featureDimension) ...
+            Networklayers = [sequenceInputLayer(featureDimension, "Normalization","zscore") ...
                 lstmLayer(100) ...
                 fullyConnectedLayer(numResponses) ...
                 regressionLayer];
@@ -211,7 +211,7 @@ set(groot, 'defaultTextInterpreter','latex');
 trainedNetworkModel = trainedNetworkModel.resetState();
 y_pred = trainedNetworkModel.predict(x_sub');
 Y_sub = Y_sub;
-y_pred = y_pred'+meanY_sub;
+y_pred = y_pred';
 figure; plot(Y_sub(:,1)); hold on; plot(y_pred(:,1),'r'); 
 legend({'Data','Prediction'});
 
