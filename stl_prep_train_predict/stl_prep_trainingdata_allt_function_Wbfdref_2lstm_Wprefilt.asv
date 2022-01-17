@@ -7,9 +7,7 @@ function [Y,Y_filt,x,sample_indexfilt, meanY, meanX]  = stl_prep_trainingdata_al
                                                     bPlot, ...
                                                     bPlotAllSelectedColumns, ...
                                                     bMeanRemove, ... 
-                                                    PrefltLEN, ...
-                                                    x_columns, ...
-                                                    y_columns)
+                                                PrefltLEN)
 
 
 % time windor for all extended regions within UL bounds
@@ -119,13 +117,10 @@ function [Y,Y_filt,x,sample_indexfilt, meanY, meanX]  = stl_prep_trainingdata_al
     end
 
     %% OUTPUT - first column is the output (i.e. BFD)
-    Y = dataaFIN(:,1:length(y_columns));
+    Y = dataaFIN(:,1);
     %low pass filter on the noisey data
-    %Ypadd   = [Y(1)*ones(1,floor(fltLEN/2)) Y' Y(end)*ones(1,floor(fltLEN/2))]';
-    Ypadd = 0;
-    %[Y_filt,sample_indexfilt] = func_simplefilter(Ypadd,fltLEN,'valid');
-    Y_filt = 0;
-    sample_indexfilt = 0;
+    Ypadd   = [Y(1)*ones(1,floor(fltLEN/2)) Y' Y(end)*ones(1,floor(fltLEN/2))]';
+    [Y_filt,sample_indexfilt] = func_simplefilter(Ypadd,fltLEN,'valid');
 
     if(bPlot)
         figure
