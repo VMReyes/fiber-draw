@@ -1,8 +1,8 @@
 function [net] = train_simple_lstm(xTrain, yTrain)
 
-[rrr,ccc] = size(xTrain{1});
-
-numResponses = 2;
+[rrr,~] = size(xTrain{1});
+[yrrr, ~] = size(yTrain{1});
+numResponses = yrrr;
 featureDimension = rrr; %1;
 %
 %numHiddenUnits = 100;
