@@ -15,13 +15,14 @@ subbatchMinLen 	= 2000; % a batch is the same as a preform, multiple
 subbatchMaxLen  = 8000; % batches (or preforms) are run, one after the 
                         % other in the tower. a subbatch is defined as a
                         % contiguous region of production
-x_columns = ["cpspdactval", "frnpwrmv", "hetubetemp", "pfspdactval"]
+x_columns = ["cpspdactval", "frnpwrmv", "pfspdactval"]
 y_columns = ["barefibrediadisplay", "tenncmv"]
 
 % Subbatch Parameters
 fltLEN = 21; 
 bPlot = 0; % Plot batch
-PrefltLEN = 1; 
+PrefltLEN = 1;
+limit_subbatches = 0;
 
 % get batch info
 [BatchInfo, STRDEF] = stl_load_batchinfo(bXLSLoad, strDataPath, ...
@@ -32,7 +33,10 @@ PrefltLEN = 1;
 
 % turn it into a train / test array
 [XTrainTranspose, YTrainTranspose] = stl_prep_training_data(BatchInfo, ...
-    STRDEF, x_columns, y_columns, fltLEN, PrefltLEN, bPlot);
+    STRDEF, x_columns, y_columns, fltLEN, PrefltLEN, bPlot, limit_subbatches);
 
 % train a model
 net = train_simple_lstm(XTrainTranspose, YTrainTranspose);
+
+% save it
+save("stored_models\simple_lstm_3in_2out.mat", "net")
