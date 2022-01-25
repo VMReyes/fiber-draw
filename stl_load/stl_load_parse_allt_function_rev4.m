@@ -125,7 +125,8 @@ if(bXLSLoad && ~bMatFileExists)
         xlsColNum2Str(nCol)
         ColLetterCell = xlsColNum2Str(nCol);
         ColLetter = ColLetterCell{1};
-        Tspoolid = readtable(strfullpth, 'Range',[ColLetter ':' ColLetter]);
+        Tspoolid_all = readtable(strfullpth,'Range',[ColLetter ':' ColLetter], 'MultipleDelimsAsOne',true);
+        Tspoolid = Tspoolid_all(:,1);
 
     temp = table2array(Tspoolid(:,1));
     strLenID = strlength(temp);
