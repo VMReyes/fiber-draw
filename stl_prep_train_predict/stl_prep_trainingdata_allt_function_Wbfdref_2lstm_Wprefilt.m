@@ -145,7 +145,7 @@ function [Y,Y_filt,x,sample_indexfilt, meanY, meanX]  = stl_prep_trainingdata_al
         Y_filt      = Y_filt    - meanY;
     end
     %% INPUTS
-    x = dataaFIN(:,[2:end]);
+    x = dataaFIN(:,[length(y_columns)+1:end]);
     % mean remove on all inputs
     meanX = mean(x);
     if(bMeanRemove)
