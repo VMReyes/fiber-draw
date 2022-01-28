@@ -121,11 +121,14 @@ if(bXLSLoad && ~bMatFileExists)
 
 
     %Spool ID
-        nCol = [ find(strcmpi(headers,'Spool_ID')==1) ];
+        nCol = [find(strcmpi(headers,'Spool_ID')==1)];
         xlsColNum2Str(nCol)
         ColLetterCell = xlsColNum2Str(nCol);
         ColLetter = ColLetterCell{1};
         Tspoolid_all = readtable(strfullpth,'Range',[ColLetter ':' ColLetter], 'MultipleDelimsAsOne',true);
+        if isempty(Tspoolid_all)
+            Tspoolid_all = readtable(strfullpth,'Range',[ColLetter ':' ColLetter]);
+        end
         Tspoolid = Tspoolid_all(:,1);
 
     temp = table2array(Tspoolid(:,1));
