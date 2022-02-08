@@ -1,0 +1,9 @@
+function [Networklayers] = create_simple_bilstm(xTrain, yTrain)
+
+[featureDimension,~] = size(xTrain{1});
+[numResponses, ~] = size(yTrain{1});
+
+Networklayers = [sequenceInputLayer(featureDimension, "Normalization","zscore") ...
+    bilstmLayer(128) ...
+    fullyConnectedLayer(numResponses) ...
+    regressionLayer];

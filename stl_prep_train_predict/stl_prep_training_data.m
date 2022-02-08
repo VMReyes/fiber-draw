@@ -1,10 +1,15 @@
 function [XTrain,YTrain] = stl_prep_training_data(BatchInfo, STRDEF, ...
-    x_columns, y_columns, fltLEN, PrefltLEN, bPlot)
+    x_columns, y_columns, fltLEN, PrefltLEN, bPlot, limit_subbatches)
 %STL_PREP_TRAINING_DATA Summary of this function goes here
 %   Detailed explanation goes here
 % generate nImportantColumns
+num_batches = length(BatchInfo)
 
-for nWhichBatch = 1:length(BatchInfo) 
+if limit_subbatches
+    num_batches = min(num_batches, 12);
+end
+
+for nWhichBatch = 1:num_batches
     %select and order columns of importance.
     nNumColumns = length(x_columns) + length(y_columns);
     nImportantColumns        = 1:nNumColumns; 
