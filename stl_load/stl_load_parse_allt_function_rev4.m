@@ -155,11 +155,11 @@ if(bXLSLoad && ~bMatFileExists)
     uniPreformID = unique(cellarrayPreform_valid)
     for uu = 1:length(uniPreformID)
         idflag         = strcmp(cellarrayPreform,uniPreformID{uu});
-        timepreform(uu) = mean(datcolDATEasnumber(find(idflag)) + datcolTIMEasnumber(find(idflag)))
+        timepreform(uu) = mean(datcolDATEasnumber(find(idflag)) + datcolTIMEasnumber(find(idflag)));
     end
     %sort uni ids by time
     [timepreform,iinds] = sort(timepreform);
-    uniPreformID = uniPreformID(iinds)
+    uniPreformID = uniPreformID(iinds);
     %
     %
     %(index) numericalID for preform
@@ -184,7 +184,7 @@ if(bXLSLoad && ~bMatFileExists)
     data00    = data00(iinds,:);
 
 else
-   matfilename
+   matfilename;
    load(matfilename);
    
 end
