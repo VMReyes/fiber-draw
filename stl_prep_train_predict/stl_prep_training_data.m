@@ -1,5 +1,5 @@
 function [XTrain,YTrain] = stl_prep_training_data(BatchInfo, STRDEF, ...
-    x_columns, y_columns, fltLEN, PrefltLEN, bPlot, limit_subbatches)
+    x_columns, y_columns, fltLEN, PrefltLEN, bPlot, limit_subbatches, yRemove125)
 %STL_PREP_TRAINING_DATA Summary of this function goes here
 %   Detailed explanation goes here
 % generate nImportantColumns
@@ -32,7 +32,8 @@ for nWhichBatch = 1:num_batches
                                                                 bMeanRemove, ...
                                                                 PrefltLEN, ...
                                                                 x_columns, ...
-                                                                y_columns);
+                                                                y_columns, ...
+                                                                yRemove125);
             bSubBatchCounter = bSubBatchCounter + 1;
             XTrainTRANSPOSE{bSubBatchCounter}=x_sub';
             YTrainTRANSPOSE{bSubBatchCounter}=Y_sub';

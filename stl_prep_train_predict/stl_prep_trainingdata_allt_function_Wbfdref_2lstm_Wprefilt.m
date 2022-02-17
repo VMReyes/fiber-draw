@@ -9,7 +9,8 @@ function [Y,Y_filt,x,sample_indexfilt, meanY, meanX]  = stl_prep_trainingdata_al
                                                     bMeanRemove, ... 
                                                     PrefltLEN, ...
                                                     x_columns, ...
-                                                    y_columns)
+                                                    y_columns, ...
+                                                    yRemove125)
 
 
 % time windor for all extended regions within UL bounds
@@ -143,6 +144,10 @@ function [Y,Y_filt,x,sample_indexfilt, meanY, meanX]  = stl_prep_trainingdata_al
     if(bMeanRemove)
         Y           = Y         - meanY;
         Y_filt      = Y_filt    - meanY;
+    end
+
+    if(yRemove125)
+        Y = Y - 125;
     end
     %% INPUTS
     x = dataaFIN(:,[length(y_columns)+1:end]);
