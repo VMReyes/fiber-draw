@@ -23,6 +23,7 @@ fltLEN = 21;
 bPlot = 0; % Plot batch
 PrefltLEN = 1;
 limit_subbatches = 0;
+yRemove125 = 1;
 
 dataFiles = dir(fullfile(strDataPath, "*.csv"));
 Xdata = {};
@@ -39,9 +40,9 @@ for i = 1:14 % Only tower 48 data
     
     % turn it into a train / test array
     [XTrainTranspose, YTrainTranspose] = stl_prep_training_data(BatchInfo, ...
-        STRDEF, x_columns, y_columns, fltLEN, PrefltLEN, bPlot, 0);
+        STRDEF, x_columns, y_columns, fltLEN, PrefltLEN, bPlot, limit_subbatches, yRemove125);
     Xdata{end+1} = XTrainTranspose;
     Ydata{end+1} = YTrainTranspose;
     filenames{end+1} = strDataFilename;
 end
-save("alldatatrain\all_data_processed_4in_1out.mat", "Xdata", "Ydata", "filenames")
+save("alldatatrain\all_data_processed_4in_1out_yremove125.mat", "Xdata", "Ydata", "filenames")
