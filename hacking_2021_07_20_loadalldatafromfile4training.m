@@ -1,9 +1,6 @@
-%
-%extracted from run_trainon_allpreforms_rev7_2lstm_withnewdataload_TEMP
+strDataPath         = 'C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\';
 
-strDataPath         = 'E:\Dropbox (SquareCircleMITtoo)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
-
-strOutputPath       = 'E:\Dropbox (SquareCircleMITtoo)\_y_Code\zzResultsFolder\alldatatrain\';
+strOutputPath       = 'C:\Users\Victor\Desktop\fiber-draw\alldatatrain\';
 
 % filenamebasearray{1} = 'DrawData_Tower51_2020-12-01_to2020-12-08';  
 % filenamebasearray{2} = 'DrawData_Tower51_2020-12-08_to2020-12-15';  
@@ -24,7 +21,7 @@ filenamebasearray{1} = 'DrawData_Tower48_2020-12-01_to2020-12-08';
 %filenamebasearray{1} = 'DrawData_Tower48_2021-03-09_to2021-03-16';  
 %filenamebasearray{1} = 'DrawData_Tower48_2021-03-16_to2021-03-23';  
 
-PrefltLEN_array = [1 5 7]; 
+PrefltLEN_array = [1]; 
 
 for fn = 1:length(filenamebasearray)
     filenamebase = filenamebasearray{fn};
@@ -43,23 +40,14 @@ for fn = 1:length(filenamebasearray)
         subbatchMinLen 	= 2000; 
         subbatchMaxLen  = 8000;
 
-        % strDataPath     = 'E:\Dropbox (SquareCircleMITtoo)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
-        %xls_file        = 'DrawData_Tower51_2021-01-05_to2021-01-12.csv';
-        %filenamebase =  'DrawData_Tower51_2021-01-05_to2021-01-12';
-        %filenamebase =  'DrawData_Tower51_2020-12-22_to2020-12-29';
         xls_file        = [filenamebase '.csv'];
         nTower          =  48;
 
 
-        %PrefltLEN       = 7;
 
         nnin_LearnRateDropPeriod    = 200;
         nnin_maxEpochs              = 250 ; %150; %500; %1000
         nnin_miniBatchSize          = 200;%200;
-        
-%         nnin_LearnRateDropPeriod    = 100;
-%         nnin_maxEpochs              = 150 ; %150; %500; %1000
-%         nnin_miniBatchSize          = 200;%200;
 
         clear BatchInfo;
         %data00, dataOTHER, uniPreformID to file
@@ -72,7 +60,6 @@ for fn = 1:length(filenamebasearray)
 
 
         tempstr = ['rev7_' filenamebase '__trALL' '_maxE' num2str(nnin_maxEpochs) '_mx' num2str(subbatchMaxLen) '_drop' num2str(nnin_LearnRateDropPeriod) '_lstm350lstm0' '_filter' num2str(PrefltLEN)];
-%        tempstr = ['rev7_' filenamebase '__trALL' '_maxE' num2str(nnin_maxEpochs) '_mx' num2str(subbatchMaxLen) '_drop' num2str(nnin_LearnRateDropPeriod) '_lstm100lstm50' '_filter' num2str(PrefltLEN)];
         filenameLock = [tempstr '.txt']; 
         fullfileout = [strOutputPath filenameLock];
 
@@ -83,8 +70,6 @@ for fn = 1:length(filenamebasearray)
         else
             save(fullfileout,'-ascii','nTower');
         end
-        %%
-        %bRNNnarx = 1;
 
         if(~bLocked)
 
@@ -93,19 +78,14 @@ for fn = 1:length(filenamebasearray)
             clear XTrainTRANSPOSE_fromONEfile;
             clear YTrainTRANSPOSE_fromONEfile;
             for nWhichBatch = 1:length(BatchInfo)
-            %for nWhichBatch = [3 5 19] % for 48 1:length(BatchInfo)
-            %for nWhichBatch = 1:4
-            %for nWhichBatch = 1:10
-            %for nWhichBatch = 2
                 nWhichSub   = -1; 
 
                 %select and order columns of importance.
-                %nImportantColumns        = [6 16 15 10   22    26 29]; %removing 11 it is an output
                 nImportantColumns        = [1 2 3 4 5 6 7]; 
                 fltLEN                  = 21;
                 bPlot                   = 0;
                 bPlotAllSelectedColumns = 1;
-                bMeanRemove             = 1;
+                bMeanRemove             = 0;
 
                 XTrainTRANSPOSE = {};
                 YTrainTRANSPOSE = {};
@@ -129,25 +109,14 @@ for fn = 1:length(filenamebasearray)
                         XTrainTRANSPOSE{bSubBatchCounter}=x_sub';
                         YTrainTRANSPOSE{bSubBatchCounter}=Y_sub';
                     end
-
-            %         %[rrr,ccc] = size(XTrainTRANSPOSE{1});
-            %         [rrr,ccc] = size(x_sub');
                 end
-
                 XTrainTRANSPOSE_ARRAY{nWhichBatch} = XTrainTRANSPOSE;
                 YTrainTRANSPOSE_ARRAY{nWhichBatch} = YTrainTRANSPOSE;
-
-
             end
 
             %all data from file
             XTrainTRANSPOSE_fromONEfile = [XTrainTRANSPOSE_ARRAY{:}];
             YTrainTRANSPOSE_fromONEfile = [YTrainTRANSPOSE_ARRAY{:}];
-
-            %return
-
-
-
 
             %% Train on all data
 
@@ -183,23 +152,10 @@ for fn = 1:length(filenamebasearray)
             maxEpochs       = nnin_maxEpochs; %150 ; %150; %500; %1000
             miniBatchSize   = nnin_miniBatchSize; %200;%200;
 
-            Networklayers = [sequenceInputLayer(featureDimension) ...
-                lstmLayer(350) ...
+            Networklayers = [sequenceInputLayer(featureDimension, "Normalization","zscore") ...
+                lstmLayer(100) ...
                 fullyConnectedLayer(numResponses) ...
                 regressionLayer];
-%             Networklayers = [sequenceInputLayer(featureDimension) ...
-%                 lstmLayer(100) ...
-%                 lstmLayer(50) ...
-%                 fullyConnectedLayer(numResponses) ...
-%                 regressionLayer];
-                %lstmLayer(50) ...
-
-            % 
-            % Networklayers = [sequenceInputLayer(featureDimension) ...
-            %     lstmLayer(numHiddenUnits) ...
-            %     lstmLayer(numHiddenUnits) ...
-            %     fullyConnectedLayer(numResponses) ...
-            %     regressionLayer];
 
             %% 
             % The initial learning rate impacts the success of the network. Using an initial 
@@ -224,22 +180,7 @@ for fn = 1:length(filenamebasearray)
                 'LearnRateSchedule','piecewise',...
                 'LearnRateDropPeriod',nnin_LearnRateDropPeriod,... %was 100
                 'Verbose',1);%,...
-                %'ValidationData',[{xval'} {yval'}]);
 
-            % options = trainingOptions('adam', ...
-            %     'MaxEpochs',maxEpochs, ...
-            %     'MiniBatchSize',miniBatchSize, ...
-            %     'GradientThreshold',10, ...
-            %     'Shuffle','once', ...
-            %     'Plots','training-progress',...
-            %     'ExecutionEnvironment','gpu',...
-            %     'LearnRateSchedule','piecewise',...
-            %     'LearnRateDropPeriod',100,...
-            %     'Verbose',0,...
-            %     'ValidationData',[{xval'} {yval'}]);
-
-
-            %poolobj = parpool;
             trainedNetworkModel = trainNetwork(XTrainTRANSPOSE_fromONEfile,YTrainTRANSPOSE_fromONEfile,Networklayers,options);
 
 
@@ -250,11 +191,6 @@ for fn = 1:length(filenamebasearray)
             XTrainTRANSPOSE_ARRAY{1}        = XTrainTRANSPOSE_fromONEfile;
             YTrainTRANSPOSE_ARRAY{1}        = YTrainTRANSPOSE_fromONEfile;
 
-
-        %     tempstr = ['rev7_' filenamebase '_trALL' '_maxE' num2str(maxEpochs) '_mx' num2str(subbatchMaxLen) '_drop' num2str(nnin_LearnRateDropPeriod) '_lstm100lstm50' '_filter' num2str(PrefltLEN) '.mat'];
-        %     save(tempstr);
-        % 
-        %     tempstr = ['rev7_' filenamebase '_trALL' '_maxE' num2str(nnin_maxEpochs) '_mx' num2str(subbatchMaxLen) '_drop' num2str(nnin_LearnRateDropPeriod) '_lstm100lstm50' '_filter' num2str(PrefltLEN)];
             filenameRslt= [tempstr '.mat']; 
 
             save([strOutputPath filenameRslt]);
@@ -264,26 +200,21 @@ for fn = 1:length(filenamebasearray)
 
 end
     
-    
-    
-% if(0)
-%     flname = ['trained_on_allpreforms_tower51_meanremove' num2str(bMeanRemove) '_min' num2str(loBFD*100) '_max' num2str(hiBFD*100)]
-%     save(flname)
-%     
-%     flname = ['trained_on_allpreformsRNN_tower51_meanremove' num2str(bMeanRemove) '_min' num2str(loBFD*100) '_max' num2str(hiBFD*100)]
-%     save(flname)
-%     
-%     
-%     
-%     flname = ['trained_on_allpreforms_tower48_meanremove' num2str(bMeanRemove) '_min' num2str(loBFD*100) '_max' num2str(hiBFD*100)]
-%     save(flname)
-%     
-%     
-%     
-%     flname = ['trained_on_allpreformsRNN_tower48_meanremove' num2str(bMeanRemove) '_min' num2str(loBFD*100) '_max' num2str(hiBFD*100)]
-%     save(flname)
-%     
-%     
-% end
+%% plot
+close all;
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
+set(groot, 'defaultLegendInterpreter','latex');
+set(groot, 'defaultTextInterpreter','latex');
+trainedNetworkModel = trainedNetworkModel.resetState();
+y_pred = trainedNetworkModel.predict(x_sub');
+Y_sub = Y_sub;
+y_pred = y_pred';
+figure; plot(Y_sub(:,1)); hold on; plot(y_pred(:,1),'r'); 
+legend({'Data','Prediction'});
 
+stl_plottrainingresults_FFTPSD_function(Y_sub(:,1), Y_sub(:,1), y_pred(:,1), y_pred(:,1));
+
+
+figure(3000); xlim([0 1]); ylim([-5 4]); 
+figure(3001); grid minor;      
 

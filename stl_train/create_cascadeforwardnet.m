@@ -1,0 +1,9 @@
+function [Networklayers] = create_simple_lstm(xTrain, yTrain)
+
+[featureDimension,~] = size(xTrain{1});
+[numResponses, ~] = size(yTrain{1});
+
+Networklayers = [sequenceInputLayer(featureDimension, "Normalization","zscore") ...
+    lstmLayer(128) ...
+    fullyConnectedLayer(numResponses) ...
+    regressionLayer];

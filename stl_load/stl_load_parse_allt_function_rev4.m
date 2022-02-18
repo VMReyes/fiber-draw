@@ -3,50 +3,8 @@ function [BatchInfo, STRDEF, dataa, data00, dataOTHER, uniPreformID  ]  = ...
         bXLSLoad, strDataPath, xls_file, ...
         nTower, ...
         bPlotAll, bPlot_each_preform_on_subplot, bPlot_each_preform_on_subplot_with_inrangesubbatches_, ...
-        loBFD, hiBFD , subbatchMinLen, subbatchMaxLen)
-
-if(0)
-    bXLSLoad = 0;
-
-    bPlotAll                                                = 0;
-    bPlot_each_preform_on_subplot                           = 1;
-    bPlot_each_preform_on_subplot_with_inrangesubbatches_   = 1;
-
-    loBFD = 124.8;
-    hiBFD = 125.2; %this HERE
-    % loBFD = 124.7;
-    % hiBFD = 125.3; %this HERE
-    % loBFD = 124;
-    % hiBFD = 126;
-    % 
-    % loBFD = 124.8;
-    % hiBFD = 125.2;
-
-    % loBFD = 115;
-    % hiBFD = 135;
-    %loBFD = 50;
-    %hiBFD = 500;
-
-    %subbatchMinLen = 500; %100 %HERE
-
-    subbatchMinLen = 200; %100 %HERE
-
-%     [BatchInfo, STRDEF]  = stl_load_parse_allt_function(bXLSLoad, bPlotAll, bPlot_each_preform_on_subplot, ...
-%         bPlot_each_preform_on_subplot_with_inrangesubbatches_, loBFD, hiBFD , subbatchMinLen);
-
-end
-
-
+        loBFD, hiBFD , subbatchMinLen, subbatchMaxLen, x_columns, y_columns)
 %main output is BatchInfo
-
-%%
-STRDEF{1} = 'barefibrediadisplay';
-STRDEF{2} = 'rampupslopevalflt';
-STRDEF{3} = 'cpspdactval';
-STRDEF{4} = 'tenncmv';
-STRDEF{5} = 'frnpwrmv';
-STRDEF{6} = 'pfspdactval';
-STRDEF{7} = 'hetubetemp';
 
 %%
 %check to see of mat files exist
@@ -60,30 +18,31 @@ if(~isempty(iindperiod))
     end
 end
 
-%%
-
 if(bXLSLoad && ~bMatFileExists)
-    %%
-
-    % strDataPath     = 'E:\Dropbox (SquareCircleMITtoo)\minigroup_mit_sterlite\from Sterlite\data\';
-    % xls_file        = 'Draw_Tower_48.xlsx';
-
-%     strDataPath     = 'E:\Dropbox (SquareCircleMITtoo)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
-%     %xls_file        = 'DrawData_Tower48_2020-12-01_to2020-12-08.csv';
-%     xls_file        = 'DrawData_Tower48_2021-03-16_to2021-03-23.csv';
-
 
     strfullpth      = [strDataPath xls_file];
     headers         = readcell(strfullpth,'Range','1:1');
 
     %which columns
-    nImportantColumns = [ find(strcmpi(headers,'barefibrediadisplay')==1)
-                            find(strcmpi(headers,'rampupslopevalflt')==1)
-                            find(strcmpi(headers,'cpspdactval')==1)
-                            find(strcmpi(headers,'tenncmv')==1)
-                            find(strcmpi(headers,'frnpwrmv')==1)
-                            find(strcmpi(headers,'pfspdactval')==1)
-                            find(strcmpi(headers,'hetubetemp')==1)]';
+    nImportantColumns = [];
+    STRDEF = [];
+    for y_column_name = y_columns
+        STRDEF{end+1} = y_column_name;
+        nImportantColumns(end+1) = find(strcmpi(headers, y_column_name)==1);
+    end
+    for x_column_name = x_columns
+        STRDEF{end+1} = x_column_name;
+        nImportantColumns(end+1) = find(strcmpi(headers, x_column_name)==1);
+    end
+    
+
+%     nImportantColumns = [ find(strcmpi(headers,'barefibrediadisplay')==1)
+%                             find(strcmpi(headers,'rampupslopevalflt')==1)
+%                             find(strcmpi(headers,'cpspdactval')==1)
+%                             find(strcmpi(headers,'tenncmv')==1)
+%                             find(strcmpi(headers,'frnpwrmv')==1)
+%                             find(strcmpi(headers,'pfspdactval')==1)
+%                             find(strcmpi(headers,'hetubetemp')==1)]';
 
     xlsColNum2Str(nImportantColumns)
 
@@ -129,13 +88,6 @@ if(bXLSLoad && ~bMatFileExists)
         datcolDrawLength    = readmatrix(strfullpth,'Range',[ColLetter ':' ColLetter]);
         datcolDrawLength    = datcolDrawLength(2:end);
 
-    % %this is slow
-    % datcolDATE    = readcell(strfullpth,'Range','AE:AE');
-    % datcolTIME    = readcell(strfullpth,'Range','AF:AF');
-    %this is much faster
-    % TT = readtimetable(strfullpth,'RowTimes','date');
-    % T = readtable(strfullpth);
-
     %date
         nCol = [ find(strcmpi(headers,'date')==1) ];
         xlsColNum2Str(nCol)
@@ -169,11 +121,15 @@ if(bXLSLoad && ~bMatFileExists)
 
 
     %Spool ID
-        nCol = [ find(strcmpi(headers,'Spool_ID')==1) ];
+        nCol = [find(strcmpi(headers,'Spool_ID')==1)];
         xlsColNum2Str(nCol)
         ColLetterCell = xlsColNum2Str(nCol);
         ColLetter = ColLetterCell{1};
-        Tspoolid = readtable(strfullpth, 'Range',[ColLetter ':' ColLetter]);
+        Tspoolid_all = readtable(strfullpth,'Range',[ColLetter ':' ColLetter], 'MultipleDelimsAsOne',true);
+        if isempty(Tspoolid_all)
+            Tspoolid_all = readtable(strfullpth,'Range',[ColLetter ':' ColLetter]);
+        end
+        Tspoolid = Tspoolid_all(:,1);
 
     temp = table2array(Tspoolid(:,1));
     strLenID = strlength(temp);
@@ -199,11 +155,11 @@ if(bXLSLoad && ~bMatFileExists)
     uniPreformID = unique(cellarrayPreform_valid)
     for uu = 1:length(uniPreformID)
         idflag         = strcmp(cellarrayPreform,uniPreformID{uu});
-        timepreform(uu) = mean(datcolDATEasnumber(find(idflag)) + datcolTIMEasnumber(find(idflag)))
+        timepreform(uu) = mean(datcolDATEasnumber(find(idflag)) + datcolTIMEasnumber(find(idflag)));
     end
     %sort uni ids by time
     [timepreform,iinds] = sort(timepreform);
-    uniPreformID = uniPreformID(iinds)
+    uniPreformID = uniPreformID(iinds);
     %
     %
     %(index) numericalID for preform
@@ -228,29 +184,10 @@ if(bXLSLoad && ~bMatFileExists)
     data00    = data00(iinds,:);
 
 else
-   matfilename
+   matfilename;
    load(matfilename);
    
 end
-%%
-
-% figure(200)
-% [m,n] = size(data00)
-% for ccc = 1:n
-%     
-%     subplot(n,1,ccc)
-%     plot(data00(:,ccc))
-% 
-% end
-% 
-% figure(300)
-% [m,n] = size(dataOTHER)
-% for ccc = 1:n
-%     
-%     subplot(n,1,ccc)
-%     plot(dataOTHER(:,ccc))
-% 
-% end
 
 %%
 %stick data together
