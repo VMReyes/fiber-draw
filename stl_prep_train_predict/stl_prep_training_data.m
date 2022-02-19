@@ -3,7 +3,7 @@ function [XTrain,YTrain] = stl_prep_training_data(BatchInfo, STRDEF, ...
 %STL_PREP_TRAINING_DATA Summary of this function goes here
 %   Detailed explanation goes here
 % generate nImportantColumns
-num_batches = length(BatchInfo)
+num_batches = length(BatchInfo);
 
 if limit_subbatches
     num_batches = min(num_batches, 12);

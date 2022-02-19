@@ -1,4 +1,4 @@
-clc; clear; close all; diary on;
+clc; clear; close all; 
 %% Init
 % parameters
 strDataPath         = 'C:\Users\georg\Dropbox (MIT)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
@@ -29,16 +29,19 @@ num_params = 2;
 
 
 %% Choose model / order (BY SINGLE SUBBATCH)
-
+diary on;
 fit_matrix_bool = cell(length(all_files), 1);
 fit_matrix = cell(length(all_files), 1);
+folder_name = "_oe_all";
 
-% if exist("_oe_all") == 7
+% if exist("_oe_all",'dir') == 7
 %     rmdir("C:\Users\georg\Desktop\MS Research\fiber-draw\_oe_all", 's');
 % end
-% mkdir('_oe_all');
+if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
 
-for file_ind = 1:length(all_files)
+for file_ind = 1:length(all_files) % hack just to skip the first file (for now)
     curr_file = all_files(file_ind);
     if ~curr_file.isdir
 
@@ -51,15 +54,16 @@ for file_ind = 1:length(all_files)
 
         % turn it into a train / test array
         [XTrainTranspose, YTrainTranspose] = stl_prep_training_data(BatchInfo, ...
-            STRDEF, x_columns, y_columns, fltLEN, PrefltLEN, bPlot, 0);
+            STRDEF, x_columns, y_columns, fltLEN, PrefltLEN, bPlot, 0, 0);
 
         fit_matrix_bool{file_ind} = zeros(length(XTrainTranspose), max_order^num_params);
         fit_matrix{file_ind} = zeros(length(XTrainTranspose), max_order^num_params);
 
-        cd 'C:\Users\georg\Desktop\MS Research\fiber-draw'
+%         cd 'C:\Users\georg\Desktop\MS Research\fiber-draw'
+        cd 'C:\Users\georg\Dropbox (MIT)\fiber-draw'
 
         fig = figure(1);
-        set(gcf, 'Position',[133.8000 95.4000 1.2952e+03 658.4000])
+        set(gcf, 'Position', [229 222 754 696])
 
         for i = 1:length(XTrainTranspose)
             xs = cell2mat(XTrainTranspose(i));
@@ -81,9 +85,10 @@ for file_ind = 1:length(all_files)
                     sys_kt = oe(iddata_bfd_to_capstan_speed,  [a b 1]);
                     [y_hat, fit, x0] = compare(iddata_bfd_to_capstan_speed, sys_kt);
                     %     [a b c d fit]
-                    disp([file_ind i a b fit])
+                    fprintf('file %d/%d\t subbatch %d/%d \t %d \t %d \t %2.4f\n', ...
+                            file_ind,length(all_files),i,length(XTrainTranspose), a, b, fit)
 
-                    if (30 < abs(fit) && abs(fit) < 200)
+                    if (30 < abs(fit) && abs(fit) < 150)
                         fit_matrix_bool{file_ind}(i, (a-1)*max_order+b) = 1;
                         fit_matrix{file_ind}(i, (a-1)*max_order+b) = abs(fit);
                         subplot(2,1,1); compare(iddata_bfd_to_capstan_speed, sys_kt);
@@ -104,6 +109,7 @@ for file_ind = 1:length(all_files)
 end
 disp('Done!')
 diary off;
+save('fit_results'+folder_name, 'fit_matrix', 'fit_matrix_bool');
 
 %% plot modality
 diary on;
@@ -178,7 +184,7 @@ bs=bs(:,any(bs));
 fs=fs(:,any(fs));
 
 figure; 
-set(gcf, 'Position',[133.8000 95.4000 1.2952e+03 658.4000])
+set(gcf, 'Position', [229 222 754 696])
 for i = 2:7
     subplot(2,3,i-1); 
     histogram(bs(i,:),200,"BinLimits",[-50 50])
@@ -187,7 +193,7 @@ for i = 2:7
 end
 
 figure; 
-set(gcf, 'Position',[133.8000 95.4000 1.2952e+03 658.4000])
+set(gcf, 'Position', [229 222 754 696])
 for i = 2:8
     subplot(2,4,i-1); 
     histogram(fs(i,:),100)
