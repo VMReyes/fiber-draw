@@ -35,12 +35,10 @@ set(groot, 'defaultTextInterpreter','latex');
     FY = fft(Y);
     FY_s = fftshift(FY);
     FY_filt = fft(Y_filt);
-    FY_filt_s = fftshift(FY_filt);
     %take the FFT
     FYpredict = fft(Ypredict);
     FYpredict_s = fftshift(FYpredict);
     FYpredict_filt = fft(Ypredict_filt);
-    FYpredict_filt_s = fftshift(FYpredict_filt);
     %the radial frequencies
     frq_discretes = 2/length(Y).*([0:(length(Y)-1)]-length(Y)/2);
     

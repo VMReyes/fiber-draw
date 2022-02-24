@@ -14,7 +14,7 @@ if(~isempty(iindperiod))
     matfilename = [xls_file(1:(iindperiod-1)) '.mat'];
     nexist = exist(matfilename);
     if(nexist == 2)
-        bMatFileExists = 1
+        bMatFileExists = 1;
     end
 end
 

@@ -32,16 +32,11 @@ num_params = 2;
 diary on;
 fit_matrix_bool = cell(length(all_files), 1);
 fit_matrix = cell(length(all_files), 1);
-folder_name = "_oe_all";
 
 % if exist("_oe_all",'dir') == 7
 %     rmdir("C:\Users\georg\Desktop\MS Research\fiber-draw\_oe_all", 's');
 % end
 if exist(folder_name, 'dir') ~= 7
-    mkdir(folder_name);
-end
-
-for file_ind = 1:length(all_files) % hack just to skip the first file (for now)
     curr_file = all_files(file_ind);
     if ~curr_file.isdir
 
@@ -79,10 +74,11 @@ for file_ind = 1:length(all_files) % hack just to skip the first file (for now)
             %     iddata_tension_to_power     = iddata(furnace_power', tension', dt);
             iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
 
-            for a = 3:max_order for b = 4:max_order %for c = 1:4 for d = 1:4
+%             for a = 3:max_order for b = 4:max_order %for c = 1:4 for d = 1:4
+            for k = 1:1000
                     %     sys_kt = armax(iddata_tension_to_power,  [a b c 1]);
                     %     sys_kt = bj(iddata_tension_to_power,  [a b c d 1]);
-                    sys_kt = oe(iddata_bfd_to_capstan_speed,  [a b 1]);
+                    sys_kt = oe(iddata_bfd_to_capstan_speed,  [6 7 1]);
                     [y_hat, fit, x0] = compare(iddata_bfd_to_capstan_speed, sys_kt);
                     %     [a b c d fit]
                     fprintf('file %d/%d\t subbatch %d/%d \t %d \t %d \t %2.4f\n', ...
@@ -102,7 +98,7 @@ for file_ind = 1:length(all_files) % hack just to skip the first file (for now)
                         saveas(fig, sprintf('%d,%d,%d%d',file_ind,i,a,b),'png');
                         cd ..;
                     end
-            end; end %; end; end
+            end %; end %; end; end
 
         end
     end
@@ -187,7 +183,7 @@ figure;
 set(gcf, 'Position', [229 222 754 696])
 for i = 2:7
     subplot(2,3,i-1); 
-    histogram(bs(i,:),200,"BinLimits",[-50 50])
+    h = histogram(bs(i,:),200,"BinLimits",[-50 50]);
     title(sprintf('B(%d) Distribution',i));
     ylabel('Frequency');
 end
@@ -196,7 +192,10 @@ figure;
 set(gcf, 'Position', [229 222 754 696])
 for i = 2:8
     subplot(2,4,i-1); 
-    histogram(fs(i,:),100)
+    histogram(fs(i,:),100);
+    histfit(fs(i,:),100);
+    d = fitdist(fs(i,:)', 'Normal');
+    fprintf('%1.6f\t%1.6f\n',d.mu, d.sigma)
     title(sprintf('F(%d) Distribution',i));
     ylabel('Frequency');
 end
