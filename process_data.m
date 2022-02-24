@@ -45,4 +45,18 @@ for i = 1:14 % Only tower 48 data
     Ydata{end+1} = YTrainTranspose;
     filenames{end+1} = strDataFilename;
 end
-save("alldatatrain\all_data_processed_4in_1out_yremove125.mat", "Xdata", "Ydata", "filenames")
+
+combined_Xdata = cat(2, Xdata{:});
+combined_Ydata = cat(2, Ydata{:});
+
+[~, num_batches] = size(combined_Xdata);
+[train_ind, test_ind] = dividerand(num_batches, 0.9, 0.1, 0.0);
+
+x_train = combined_Xdata(train_ind);
+y_train = combined_Ydata(train_ind);
+x_test = combined_Xdata(test_ind);
+y_test = combined_Ydata(test_ind);
+
+
+save("alldatatrain\all_data_processed_4in_1out_yremove125.mat", "Xdata", "Ydata", ...
+     "x_train", "y_train", "x_test", "y_test", "filenames")
