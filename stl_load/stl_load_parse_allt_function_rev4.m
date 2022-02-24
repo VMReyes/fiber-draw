@@ -44,7 +44,7 @@ if(bXLSLoad && ~bMatFileExists)
 %                             find(strcmpi(headers,'pfspdactval')==1)
 %                             find(strcmpi(headers,'hetubetemp')==1)]';
 
-    xlsColNum2Str(nImportantColumns)
+    xlsColNum2Str(nImportantColumns);
 
     figure(100)
     data00 =[];
@@ -66,7 +66,7 @@ if(bXLSLoad && ~bMatFileExists)
 
     %good fiber start
         nGoodFiberCol = [ find(strcmpi(headers,'GoodFibreStartState')==1) ];
-        xlsColNum2Str(nGoodFiberCol)
+        xlsColNum2Str(nGoodFiberCol);
         ColLetterCell = xlsColNum2Str(nGoodFiberCol);
         ColLetter = ColLetterCell{1};
         datcolGOOD    = readmatrix(strfullpth,'Range',[ColLetter ':' ColLetter]);
@@ -74,7 +74,7 @@ if(bXLSLoad && ~bMatFileExists)
 
     % Preform Process Position
         nCol = [ find(strcmpi(headers,'pfprocesspsn')==1) ];
-        xlsColNum2Str(nCol)
+        xlsColNum2Str(nCol);
         ColLetterCell = xlsColNum2Str(nCol);
         ColLetter = ColLetterCell{1};
         datcolPreformPos    = readmatrix(strfullpth,'Range',[ColLetter ':' ColLetter]);
@@ -82,7 +82,7 @@ if(bXLSLoad && ~bMatFileExists)
 
     % Fiber Draw length / position
         nCol = [ find(strcmpi(headers,'CpLenTareVal')==1) ];
-        xlsColNum2Str(nCol)
+        xlsColNum2Str(nCol);
         ColLetterCell = xlsColNum2Str(nCol);
         ColLetter = ColLetterCell{1};
         datcolDrawLength    = readmatrix(strfullpth,'Range',[ColLetter ':' ColLetter]);
@@ -90,7 +90,7 @@ if(bXLSLoad && ~bMatFileExists)
 
     %date
         nCol = [ find(strcmpi(headers,'date')==1) ];
-        xlsColNum2Str(nCol)
+        xlsColNum2Str(nCol);
         ColLetterCell = xlsColNum2Str(nCol);
         ColLetter = ColLetterCell{1};
         Tdate = readtable(strfullpth, 'Range',[ColLetter ':' ColLetter]);
@@ -98,7 +98,7 @@ if(bXLSLoad && ~bMatFileExists)
 
     %time
         nCol = [ find(strcmpi(headers,'time')==1) ];
-        xlsColNum2Str(nCol)
+        xlsColNum2Str(nCol);
         ColLetterCell = xlsColNum2Str(nCol);
         ColLetter = ColLetterCell{1};
         Ttime = readtable(strfullpth, 'Range',[ColLetter ':' ColLetter]);
@@ -112,7 +112,7 @@ if(bXLSLoad && ~bMatFileExists)
 
     %ms time
         nCol = [ find(strcmpi(headers,'Millitm')==1) ];
-        xlsColNum2Str(nCol)
+        xlsColNum2Str(nCol);
         ColLetterCell = xlsColNum2Str(nCol);
         ColLetter = ColLetterCell{1};
         datcolMSTIMEasnumber = readmatrix(strfullpth,'Range',[ColLetter ':' ColLetter]);
@@ -122,7 +122,7 @@ if(bXLSLoad && ~bMatFileExists)
 
     %Spool ID
         nCol = [find(strcmpi(headers,'Spool_ID')==1)];
-        xlsColNum2Str(nCol)
+        xlsColNum2Str(nCol);
         ColLetterCell = xlsColNum2Str(nCol);
         ColLetter = ColLetterCell{1};
         Tspoolid_all = readtable(strfullpth,'Range',[ColLetter ':' ColLetter], 'MultipleDelimsAsOne',true);
@@ -152,7 +152,7 @@ if(bXLSLoad && ~bMatFileExists)
     datacolSpoolNum(indswithValidID) = datacolSpoolNum_valid;
 
     %average time of each preform
-    uniPreformID = unique(cellarrayPreform_valid)
+    uniPreformID = unique(cellarrayPreform_valid);
     for uu = 1:length(uniPreformID)
         idflag         = strcmp(cellarrayPreform,uniPreformID{uu});
         timepreform(uu) = mean(datcolDATEasnumber(find(idflag)) + datcolTIMEasnumber(find(idflag)));
@@ -205,7 +205,7 @@ n5or4 = ceil(numBatches/m6or8);
 clear BatchInfo;
 for uu = 1:numBatches
     inds         = find(datacolPreFormNumSORTED == uu);
-    [min(inds) max(inds)] 
+    [min(inds) max(inds)] ;
     %
     origiinds = min(inds):max(inds);
     data4pf = dataa(origiinds,:);
@@ -260,7 +260,7 @@ end
 % subbatchMinLen = ...
 for ii = 1:numBatches
 %for ii = 13
-    ['batch ' num2str(ii)]
+    ['batch ' num2str(ii)];
 
     %BFD = dataSTORE{ii}(:,6);
     BFD = BatchInfo(ii).data(:,1);
