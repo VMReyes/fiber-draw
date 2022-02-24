@@ -32,11 +32,13 @@ num_params = 2;
 diary on;
 fit_matrix_bool = cell(length(all_files), 1);
 fit_matrix = cell(length(all_files), 1);
+folder_name = "_search_k";
 
-% if exist("_oe_all",'dir') == 7
-%     rmdir("C:\Users\georg\Desktop\MS Research\fiber-draw\_oe_all", 's');
-% end
 if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+for file_ind = 1:length(all_files)
     curr_file = all_files(file_ind);
     if ~curr_file.isdir
 
@@ -78,7 +80,7 @@ if exist(folder_name, 'dir') ~= 7
             for k = 1:1000
                     %     sys_kt = armax(iddata_tension_to_power,  [a b c 1]);
                     %     sys_kt = bj(iddata_tension_to_power,  [a b c d 1]);
-                    sys_kt = oe(iddata_bfd_to_capstan_speed,  [6 7 1]);
+                    sys_kt = oe(iddata_bfd_to_capstan_speed,  [6 7 k]);
                     [y_hat, fit, x0] = compare(iddata_bfd_to_capstan_speed, sys_kt);
                     %     [a b c d fit]
                     fprintf('file %d/%d\t subbatch %d/%d \t %d \t %d \t %2.4f\n', ...
