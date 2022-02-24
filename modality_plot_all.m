@@ -32,11 +32,8 @@ num_params = 2;
 diary on;
 fit_matrix_bool = cell(length(all_files), 1);
 fit_matrix = cell(length(all_files), 1);
-folder_name = "_oe_all";
+folder_name = "_armax_all";
 
-% if exist("_oe_all",'dir') == 7
-%     rmdir("C:\Users\georg\Desktop\MS Research\fiber-draw\_oe_all", 's');
-% end
 if exist(folder_name, 'dir') ~= 7
     mkdir(folder_name);
 end
@@ -79,30 +76,30 @@ for file_ind = 1:length(all_files) % hack just to skip the first file (for now)
             %     iddata_tension_to_power     = iddata(furnace_power', tension', dt);
             iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
 
-            for a = 3:max_order for b = 4:max_order %for c = 1:4 for d = 1:4
+            for a = 1:max_order for b = 1:max_order for c = 1:max_order
                     %     sys_kt = armax(iddata_tension_to_power,  [a b c 1]);
                     %     sys_kt = bj(iddata_tension_to_power,  [a b c d 1]);
-                    sys_kt = oe(iddata_bfd_to_capstan_speed,  [a b 1]);
+                    sys_kt = armax(iddata_bfd_to_capstan_speed,  [a b c 1]);
                     [y_hat, fit, x0] = compare(iddata_bfd_to_capstan_speed, sys_kt);
                     %     [a b c d fit]
-                    fprintf('file %d/%d\t subbatch %d/%d \t %d \t %d \t %2.4f\n', ...
-                            file_ind,length(all_files),i,length(XTrainTranspose), a, b, fit)
+                    fprintf('file %d/%d\t subbatch %d/%d \t %d \t %d \t %d \t %2.4f\n', ...
+                            file_ind,length(all_files),i,length(XTrainTranspose), a, b, c, fit)
 
                     if (30 < abs(fit) && abs(fit) < 150)
                         fit_matrix_bool{file_ind}(i, (a-1)*max_order+b) = 1;
                         fit_matrix{file_ind}(i, (a-1)*max_order+b) = abs(fit);
                         subplot(2,1,1); compare(iddata_bfd_to_capstan_speed, sys_kt);
-                        title(sprintf('%d, %d, %d%d', file_ind,i,a,b));
+                        title(sprintf('%d, %d, (%d,%d,%d)', file_ind,i,a,b,c));
                         ax = gca; ax.Legend.Location = 'southeast';
 
                         subplot(2,1,2);
                         plot_fft(capstan_speed, capstan_speed, y_hat.OutputData, y_hat.OutputData)
 
-                        cd('_oe_all');
-                        saveas(fig, sprintf('%d,%d,%d%d',file_ind,i,a,b),'png');
+                        cd(folder_name);
+                        saveas(fig, sprintf('%d,%d,(%d,%d,%d)',file_ind,i,a,b,c),'png');
                         cd ..;
                     end
-            end; end %; end; end
+            end; end; end
 
         end
     end
