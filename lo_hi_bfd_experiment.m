@@ -23,10 +23,28 @@ for i = 1:10
     y_test = combined_Ydata(test_ind);
 
     % train model
-    simple_bilstm = create_simple_bilstm(x_train, y_train);
-    [simple_bilstm, simple_bilstm_info] = train_lstm(simple_bilstm, x_train, y_train, x_test, y_test, 16);
+    deep_lstm = create_deep_lstm(x_train, y_train);
+    [deep_lstm, deep_lstm_info] = train_lstm(deep_lstm, x_train, y_train, x_test, y_test, 16);
 
-    nets{end+1} = simple_bilstm;
-    infos{end+1} = simple_bilstm_info;
+    nets{end+1} = deep_lstm;
+    infos{end+1} = deep_lstm_info;
 end
 
+load("alldatatrain\all_data_processed_4in_1out_yremove125.mat", "x_test", "y_test")
+error_matrix = zeros(1,10);
+for i = 1:10
+    net = nets{i};
+    net = net.resetState();
+    y_pred = net.predict(x_test, 'MiniBatchSize', 1);
+    mse = 0;
+    for b = 1:length(y_pred)
+        squared_loss = sum((y_pred{b} - y_test{b}).^2);
+        mse = mse + squared_loss;
+    end
+    mse = mse / length(y_pred);  
+    rmse = sqrt(mse);
+    error_matrix(1,i) = rmse;
+end
+
+
+save("run_results/lohi_bfd_experiment.mat")
