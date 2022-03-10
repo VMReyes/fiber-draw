@@ -1,8 +1,6 @@
 % parameters
 strDataPath         = 'C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\';
 strOutputPath       = 'C:\Users\Victor\Desktop\fiber-draw\alldatatrain\';
-strDataFilename = 'DrawData_Tower48_2020-12-01_to2020-12-08.csv';
-
 % BatchInfo Parameters
 bXLSLoad = 1;
 bPlotAll = 0;
