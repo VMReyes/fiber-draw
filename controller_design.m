@@ -99,15 +99,15 @@ for i = 1:length(XTrainTranspose)
     for a=2:max_order for b = 3:max_order %for c = 1:4 for d = 1:4
 %     sys_kt = armax(iddata_tension_to_power,  [a b c 1]);
 %     sys_kt = bj(iddata_tension_to_power,  [a b c d 1]);
-    sys_kt = oe(iddata_bfd_to_capstan_speed,  [a b 1]);   
-    [y_hat, fit, x0] = compare(iddata_bfd_to_capstan_speed, sys_kt);
+    sys_kd = oe(iddata_bfd_to_capstan_speed,  [a b 1]);   
+    [y_hat, fit, x0] = compare(iddata_bfd_to_capstan_speed, sys_kd);
 %     [a b c d fit]
     disp([i a b fit])
 
     if (30 < abs(fit) && abs(fit) < 200)
         fit_matrix_bool(i, (a-1)*max_order+b) = 1;
         fit_matrix(i, (a-1)*max_order+b) = abs(fit);
-        subplot(2,1,1); compare(iddata_bfd_to_capstan_speed, sys_kt);
+        subplot(2,1,1); compare(iddata_bfd_to_capstan_speed, sys_kd);
         title(sprintf('%d, %d%d', i,a,b)); 
         ax = gca; ax.Legend.Location = 'southeast';
         
@@ -141,15 +141,15 @@ for i = 1:length(XTrainTranspose)
     iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
     
     % replace for different graph
-    sys_kt = oe(iddata_bfd_to_capstan_speed,  [4 1 1]); 
-    [sys_kt.A sys_kt.B sys_kt.C sys_kt.D sys_kt.F];
-    as(i) = sys_kt.A;
-    bs(:,i) = sys_kt.B;
-    cs(i) = sys_kt.C;
-    ds(i) = sys_kt.D;
-    fs(:,i) = sys_kt.F;
+    sys_kd = oe(iddata_bfd_to_capstan_speed,  [4 1 1]); 
+    [sys_kd.A sys_kd.B sys_kd.C sys_kd.D sys_kd.F];
+    as(i) = sys_kd.A;
+    bs(:,i) = sys_kd.B;
+    cs(i) = sys_kd.C;
+    ds(i) = sys_kd.D;
+    fs(:,i) = sys_kd.F;
 
-%     [y_hat, fit, x0] = compare(iddata_bfd_to_capstan_speed, sys_kt);
+%     [y_hat, fit, x0] = compare(iddata_bfd_to_capstan_speed, sys_kd);
 %     figure(1); plot(capstan_speed); hold on; plot(y_hat, 'r'); hold off;
 %     stl_plottrainingresults_FFTPSD_function(capstan_speed, capstan_speed, y_hat.OutputData, y_hat.OutputData);
 
