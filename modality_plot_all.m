@@ -3,7 +3,7 @@ clc; clear; close all;
 % parameters
 strDataPath         = 'C:\Users\georg\Dropbox (MIT)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
 all_files = dir(strDataPath);
-curr_path = 'D:\GEORGE\fiber-draw';
+curr_path = 'C:\Users\georg\Desktop\fiber-draw';
 
 % BatchInfo Parameters
 bXLSLoad = 1;
@@ -279,7 +279,7 @@ for i = 2:8
     ylabel('Frequency');
 end
 
-%% analysis 
+%% analyze - convert cell to matrix
 
 fit_matrix_all = [];
 fit_matrix_bool_all = [];
@@ -294,7 +294,7 @@ end
 folder_name = "_analysis";
 
 % cd 'C:\Users\georg\Dropbox (MIT)\fiber-draw'
-cd 'D:\GEORGE\fiber-draw'
+cd(curr_path)
 
 if exist(folder_name, 'dir') ~= 7
     mkdir(folder_name);
@@ -367,6 +367,73 @@ for file_ind = 1:length(all_files)
     end
 end
 disp('Done!')
+
+%% PLOT OVERLAP BODE
+
+folder_name = "_bode";
+
+% cd 'C:\Users\georg\Dropbox (MIT)\fiber-draw'
+cd(curr_path)
+
+if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+for file_ind = 1:length(all_files) 
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+
+        % get batch info
+        [BatchInfo, STRDEF] = stl_load_batchinfo(bXLSLoad, strDataPath, ...
+            curr_file.name, nTower, bPlotAll, ...
+            bPlot_each_preform_on_subplot_with_inrangesubbatches_, ...
+            bPlot_each_preform_on_subplot, loBFD, hiBFD, subbatchMinLen, subbatchMaxLen, ...
+            x_columns, y_columns);
+
+        % turn it into a train / test array
+        [XTrainTranspose, YTrainTranspose] = stl_prep_training_data(BatchInfo, ...
+            STRDEF, x_columns, y_columns, fltLEN, PrefltLEN, bPlot, 0, 0);
+
+        for i = 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
+            bfd = ys(1,:); tension = ys(2,:);
+            
+            dt = 1; 
+%             a = 5; b = 5; k = 3;
+            a = 4; b = 2; c = 2; k = 2;
+            %     iddata_tension_to_power     = iddata(furnace_power', tension', dt);
+            iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
+%             sys_kd = oe(iddata_bfd_to_capstan_speed,  [a b k]);
+            sys_kd = armax(iddata_bfd_to_capstan_speed,  [a b c k]);
+
+            [y_hat, fit, x0] = compare(iddata_bfd_to_capstan_speed, sys_kd);
+            fprintf('file %d/%d\t subbatch %d/%d %2.4f\n', ...
+                    file_ind,length(all_files),i,length(XTrainTranspose), fit)
+
+            if (80 < abs(fit) && abs(fit) < 100)
+                [m,p] = bode(sys_kd, {10^-8, 10});
+                m = m(:); p = p(:); m = 20 * log10(m); p = p - p(1);
+                if (97 > max(m) && max(m) > 50 && max(p) < 100)
+                    fig2 = figure(2); set(gcf, 'Position', [1048 222 754 696])
+                    hold on; 
+                    bodeopt = bodeoptions("cstprefs");
+                    bodeopt.PhaseMatching = 'on';
+                    bodeopt.PhaseMatchingFreq = 10^-8;
+                    bodeopt.PhaseMatchingValue = 0;
+                    bode(sys_kd, {10^-8, 10}, bodeopt);
+                end
+%                 if (80 < abs(fit) && abs(fit) < 100) 
+%                     saveas(fig2, sprintf('%s\\%s\\%d,%d-2', curr_path, folder_name, file_ind, i),'png');  
+%                 end
+            end
+
+        end
+    end
+end
+disp('Done!')
+
 %% plotting poles (4th order, not really good fit)
 figure(2); hold on;
 for file_ind = 1:length(all_files)
