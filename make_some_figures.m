@@ -133,7 +133,7 @@ all_w = logspace(-3,log10(nyq_freq),100);
 % all_A = 5:5:700; % for capstan speed
 all_max_A = [700 10 3 20]; % 1st, 2nd, 3rd, 4th row
 
-for row = 4:length(all_max_A)
+for row = 2:length(all_max_A) 
     all_A = 0:0.1:all_max_A(row);
     bode_p2p = zeros(length(all_A), length(all_w));
     bode_fit_obj = cell(length(all_A), length(all_w));
@@ -170,28 +170,40 @@ for row = 4:length(all_max_A)
             [fit_obj, goodness_info] = fit(t', y_pred', ft);
     
             % identify peaks
-%             all_peaks = y_pred(islocalmax(y_pred));
-%             all_peaks = all_peaks(all_peaks > (fit_obj.c + abs(fit_obj.a)));
-%             all_troughs = y_pred(islocalmin(y_pred));
-%             all_troughs = all_troughs(all_troughs < (fit_obj.c)); 
-%             A_p2p = (mean(all_peaks(2:end)) - mean(all_troughs(2:end)))/2;
-            
-            [y_pred_top, y_pred_bot] = envelope(y_pred);
-            peaks_ind = islocalmax(y_pred_top);
-            troughs_ind = islocalmin(y_pred_bot);
-            first_3_peaks = find(peaks_ind,3); first_3_troughs = find(troughs_ind,3);
-            peak = max(y_pred_top(first_3_peaks(end):end)); 
-            trough = min(y_pred_bot(first_3_troughs(end):end));
-            A_p2p = (peak - trough) / 2;
-            bode_p2p(i,j) = A_p2p; bode_fit_obj{i,j} = fit_obj;
+            peaks_ind = islocalmax(y_pred); troughs_ind = islocalmin(y_pred);
+            all_peaks = y_pred(peaks_ind);
+            all_peaks = all_peaks(all_peaks > (fit_obj.c + abs(fit_obj.a)));
+            all_troughs = y_pred(troughs_ind);
+            all_troughs = all_troughs(all_troughs < (fit_obj.c)); 
+            A_p2p = (mean(all_peaks(2:end)) - mean(all_troughs(2:end)))/2;
+%             peaks = zeros(1,length(y_pred)); troughs = zeros(1,length(y_pred));
+%             for k = 1:length(peaks_ind)
+%                 if peaks_ind(k) && y_pred(k) > (fit_obj.c + abs(fit_obj.a))
+%                     peaks(k) = y_pred(k);
+%                 else
+%                     peaks(k) = nan;
+%                 end
+%             end
+%             for k = 1:length(troughs_ind)
+%                 if troughs_ind(k) && y_pred(k) < (fit_obj.c)
+%                     troughs(k) = y_pred(k);
+%                 else
+%                     troughs(k) = nan;
+%                 end
+%             end
+
+                    
     
             figure(2); 
-            plot(ones(1, length(subbatch))*mean(all_peaks)); hold on; 
-            plot(ones(1, length(subbatch))*mean(all_troughs));
-%             plot(ones(1, length(subbatch))*peak); hold on; 
-%             plot(ones(1, length(subbatch))*trough);
-            plot(fit_obj, t, y_pred, '-'); hold off;
-            xlim([0 1e2]); 
+            plot(fit_obj, t, y_pred, '-'); hold on;
+            plot(ones(1, length(subbatch))*max(all_peaks(2:end))); 
+            plot(ones(1, length(subbatch))*min(all_troughs(2:end)));
+            
+%             plot(t, peaks, '.', 'MarkerSize', 20);
+%             plot(t, troughs, '.', 'MarkerSize', 20);
+            hold off; pause(2)
+
+%             xlim([0 1e2]); 
             fprintf('row: %d\t i: %d/%d\t j:%d/%d\n', row, i, length(all_A), j, length(all_w))
         end
     end
