@@ -99,62 +99,124 @@ title('Example Batch of BFD Data'); xlabel('Samples'); ylabel('Bare Fiber Diamet
 end
 
 disp('Done!')
-%% simulated / empirical bode plot
+%% generate simulated / empirical bode 
+clc; clear;
 load("run_results\architecture_experiment.mat");
 load("alldatatrain\all_data_processed_4in_1out_yremove125.mat");
-net = deep_lstm.resetState();
-
-% Xdata = [(num_subbatches, 4, 8000), (num_subbatches, 4, 800), .. for
-% every file)]
-% combined_Xdata.shape = (num_subbatches, 4 (inputs), 8000 (seq. length))
-% bode_example = combined_Xdata{1}
-% bode_example.shape = (4, 8000)
-% bode_example{2} = sine_wave(amp, freq, len=8000)
-% y_pred = net.predict(bode_example, "MiniBatchSize", 1)
-% x_columns = ["cpspdactval", "frnpwrmv", "hetubetemp", "pfspdactval"]
-% y_columns = ["barefibrediadisplay"]
+combined_Xdata = cat(2, Xdata{:});
 
 % Xdata rows: capstan speed, furnace power, He temp, preform velocity
 
-% stats_matrix = zeros(length(combined_Xdata),3);
-% for i = 1:length(combined_Xdata)
-%     subbatch = combined_Xdata{i};
-%     stats_matrix(i,:) = [mean(subbatch(2,:)) mean(subbatch(3,:)) mean(subbatch(4,:))];
-% end
+stats_matrix = zeros(length(combined_Xdata),4);
+for i = 1:length(combined_Xdata)
+    subbatch = combined_Xdata{i};
+    stats_matrix(i,:) = [mean(subbatch(1,:)) mean(subbatch(2,:)) mean(subbatch(3,:)) mean(subbatch(4,:))];
+end
+% figure; plot(stats_matrix)
 
 % alist = zeros(1, length(combined_Xdata));
-% for i = 1: length(combined_Xdata)
+% for i = 1:length(combined_Xdata)
 %     alist(i) = (max(combined_Xdata{i}(1,:)) - min(combined_Xdata{i}(1,:)));
 % end
-% figure; plot(alist,'.'); ylim([0, 2500])
+% figure; histogram(alist,200,"BinLimits",[0 2700])
 
 combined_Xdata = cat(2, Xdata{:});
 combined_Ydata = cat(2, Ydata{:});
-new_Xdata = cell(length(combined_Xdata),1);
 
-for i = 1:1 % length(combined_Xdata)
+sampling_freq = 2; % Hz
+nyq_freq = sampling_freq * 2*3 / 2;
+avg_capstan_speed = 2500; % 2500 or 2685
+subbatch_length = 8000;
+t = 1:subbatch_length; % subbatch length
 
-    subbatch = combined_Xdata{i};
-    A = 250;
-    f = 0.03;
-    t = 1:length(subbatch);
-    sine_wave = A*sin(2*pi*f*t);
-    % figure(1); plot(t,combined_Ydata{1}); xlim([0 1e2]); hold on;
-    % plot(t, sine_wave); hold off;
+all_w = logspace(-3,log10(nyq_freq),100);
+% all_A = 5:5:700; % for capstan speed
+all_max_A = [700 10 3 20]; % 1st, 2nd, 3rd, 4th row
 
-    new_Xdata{i} = [ones(1,length(subbatch))*mean(subbatch(1,:)) + sine_wave; 
-                    ones(1,length(subbatch))*mean(subbatch(2,:)); 
-                    ones(1,length(subbatch))*mean(subbatch(3,:)); 
-                    ones(1,length(subbatch))*mean(subbatch(4,:))];
+for row = 4:length(all_max_A)
+    all_A = 0:0.1:all_max_A(row);
+    bode_p2p = zeros(length(all_A), length(all_w));
+    bode_fit_obj = cell(length(all_A), length(all_w));
+    
+    for i = 1:length(all_A)
+        for j = 1:length(all_w)
+            
+            A = all_A(i); w = all_w(j);
+    
+    %         sine_wave = (avg_capstan_speed-A/2) * sin(w*t);
+        
+            % modify 1st, 2nd, 3rd, 4th line to be sine wave
+    %         new_Xdata = [ones(1,subbatch_length)*avg_capstan_speed + sine_wave; 
+    %                      ones(1,subbatch_length)*median(stats_matrix(:,2)); 
+    %                      ones(1,subbatch_length)*median(stats_matrix(:,3)); 
+    %                      ones(1,subbatch_length)*median(stats_matrix(:,4))];
+            
+            sine_wave = A * sin(w*t);
+            new_Xdata = [ones(1,subbatch_length)*avg_capstan_speed; 
+                         ones(1,subbatch_length)*median(stats_matrix(:,2));
+                         ones(1,subbatch_length)*median(stats_matrix(:,3)); 
+                         ones(1,subbatch_length)*median(stats_matrix(:,4))];
+
+            new_Xdata(row,:) = new_Xdata(row,:) + sine_wave;
+    
+            % see, it's similar to input!
+            % figure(1); plot(combined_Xdata{1}'); hold on; plot(new_Xdata{1}', 'k'); hold off;
+            net = deep_lstm.resetState();
+            y_pred = net.predict(new_Xdata, "MiniBatchSize", 1);
+    
+            eqn_str = sprintf('a*sin(%f*x+phi)+c',w);
+            ft = fittype(eqn_str, 'independent', 'x', 'dependent', 'y');
+            fit_opt = fitoptions('Method','LinearLeastSquares' , 'Robust', 'Bisquare');
+            [fit_obj, goodness_info] = fit(t', y_pred', ft);
+    
+            % identify peaks
+%             all_peaks = y_pred(islocalmax(y_pred));
+%             all_peaks = all_peaks(all_peaks > (fit_obj.c + abs(fit_obj.a)));
+%             all_troughs = y_pred(islocalmin(y_pred));
+%             all_troughs = all_troughs(all_troughs < (fit_obj.c)); 
+%             A_p2p = (mean(all_peaks(2:end)) - mean(all_troughs(2:end)))/2;
+            
+            [y_pred_top, y_pred_bot] = envelope(y_pred);
+            peaks_ind = islocalmax(y_pred_top);
+            troughs_ind = islocalmin(y_pred_bot);
+            first_3_peaks = find(peaks_ind,3); first_3_troughs = find(troughs_ind,3);
+            peak = max(y_pred_top(first_3_peaks(end):end)); 
+            trough = min(y_pred_bot(first_3_troughs(end):end));
+            A_p2p = (peak - trough) / 2;
+            bode_p2p(i,j) = A_p2p; bode_fit_obj{i,j} = fit_obj;
+    
+            figure(2); 
+            plot(ones(1, length(subbatch))*mean(all_peaks)); hold on; 
+            plot(ones(1, length(subbatch))*mean(all_troughs));
+%             plot(ones(1, length(subbatch))*peak); hold on; 
+%             plot(ones(1, length(subbatch))*trough);
+            plot(fit_obj, t, y_pred, '-'); hold off;
+            xlim([0 1e2]); 
+            fprintf('row: %d\t i: %d/%d\t j:%d/%d\n', row, i, length(all_A), j, length(all_w))
+        end
+    end
+    save(sprintf('simulated_bode_%d.mat',row),"bode_fit_obj",'bode_p2p');
+end
+%% plot simulated bode
+clc; close all;
+load simulated_bode.mat
+
+figure; axes('XScale', 'log', 'YScale', 'log')
+hold on;
+for A = 1:size(bode_fit_obj,1)
+    row = zeros(1,size(bode_fit_obj,2));
+    for i = 1:length(row)
+        row(i) = abs(bode_fit_obj{A,i}.a)/all_A(A);
+    end
+    plot(all_w, row)
 end
 
-figure(1); plot(combined_Xdata{1}'); hold on; plot(new_Xdata{1}', 'k'); hold off;
-
-y_pred = net.predict(new_Xdata{1}, "MiniBatchSize", 1);
-
-eqn_str = sprintf('a*sin(2*pi*%s*x+c)+d',f);
-ft = fittype(eqn_str, 'independent', 'x', 'dependent', 'y');
-[fit_obj, goodness_info] = fit(t', y_pred', ft);
-(mean(y_pred(islocalmax(y_pred))) - mean(y_pred(islocalmin(y_pred))))/2
-
-figure(2); plot(y_pred); hold on; plot(fit_obj); xlim([0 1e3]); hold off;
+figure; axes('XScale', 'log', 'YScale', 'log');
+hold on;
+for A = 1:10 %1:size(bode_p2p,1)
+    plot(all_w, bode_p2p(A,:)./all_A(A))
+end
+xline(nyq_freq);
+xlabel('Frequency (rad/s)'); ylabel('Gain');
+title('Simulated Bode Plot of Fiber Drawing Plant')
+xlim([1e-3 10]) %band-aid fix, need fix p2p calc & resample
