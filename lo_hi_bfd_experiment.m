@@ -39,7 +39,8 @@ for i = 1:10
     mse = 0;
     for b = 1:length(y_pred)
         squared_loss = sum((y_pred{b} - y_test{b}).^2);
-        mse = mse + squared_loss;
+        mean_squared_loss = squared_loss / length(y_pred{b});
+        mse = mse + mean_squared_loss;
     end
     mse = mse / length(y_pred);  
     rmse = sqrt(mse);

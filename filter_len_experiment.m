@@ -1,7 +1,6 @@
 % parameters
 strDataPath         = 'C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\';
 strOutputPath       = 'C:\Users\Victor\Desktop\fiber-draw\alldatatrain\';
-strDataFilename = 'DrawData_Tower48_2020-12-01_to2020-12-08.csv';
 
 % BatchInfo Parameters
 bXLSLoad = 1;
@@ -99,10 +98,9 @@ for i = 1:4
             squared_loss = sum((output_data{b} - model_prediction).^2);
             mse = mse + squared_loss;
         end
-        mse = mse / length(input_data);  
-        rmse = sqrt(mse);
-        error_matrix(i,j) = rmse;
+        squared_loss_total = mse;
+        error_matrix(i,j) = squared_loss_total;
     end
 end
 
-save("run_results/filter_len_experiment");
+save("run_results/filter_len_experiment.mat");
