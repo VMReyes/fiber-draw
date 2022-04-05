@@ -121,25 +121,25 @@ end
 % figure; plot(stats_matrix)
 
 % visualize the distribution of ranges (max-min) of signal
-for row = 1:4
-    ranges = zeros(1, length(combined_Xdata));
-    for i = 1:length(combined_Xdata)
-        ranges(i) = (max(combined_Xdata{i}(row,:)) - min(combined_Xdata{i}(row,:)));
-    end
-    figure; 
-    
-    switch row
-        case 1
-            histogram(ranges,200,"BinLimits",[0 2700]); xline(700, 'LineWidth',2); % 1st row
-        case 2
-            histogram(ranges,100,"BinLimits",[0 15]); xline(10, 'LineWidth',2); % 2nd row
-        case 3
-            histogram(ranges,100,"BinLimits",[0 5]); xline(3, 'LineWidth',2); % 3rd row
-        case 4
-            histogram(ranges,100,"BinLimits",[0 35]); xline(15, 'LineWidth',2) % 4th row
-    end
-    latexify_plot;
-end
+% for row = 1:4
+%     ranges = zeros(1, length(combined_Xdata));
+%     for i = 1:length(combined_Xdata)
+%         ranges(i) = (max(combined_Xdata{i}(row,:)) - min(combined_Xdata{i}(row,:)));
+%     end
+%     figure; 
+%     
+%     switch row
+%         case 1
+%             histogram(ranges,200,"BinLimits",[0 2700]); xline(700, 'LineWidth',2); % 1st row
+%         case 2
+%             histogram(ranges,100,"BinLimits",[0 15]); xline(10, 'LineWidth',2); % 2nd row
+%         case 3
+%             histogram(ranges,100,"BinLimits",[0 5]); xline(3, 'LineWidth',2); % 3rd row
+%         case 4
+%             histogram(ranges,100,"BinLimits",[0 35]); xline(15, 'LineWidth',2) % 4th row
+%     end
+%     latexify_plot;
+% end
 
 combined_Xdata = cat(2, Xdata{:});
 combined_Ydata = cat(2, Ydata{:});
@@ -151,7 +151,7 @@ subbatch_length = 8000;
 t = 1:subbatch_length; 
 
 all_w = logspace(-3,log10(nyq_freq),100);
-all_max_A = [700 10 3 20]; % 1st, 2nd, 3rd, 4th row
+all_max_A = [700 10 3 15]; % 1st, 2nd, 3rd, 4th row
 fit_opt = fitoptions('Method','LinearLeastSquares' , 'Robust', 'Bisquare');
 
 bPlot = 0;
@@ -266,7 +266,7 @@ for A = 2:size(bode_fit_obj,1)
         end
         plot(all_w, row)
     end
-    pause(0.5)
+%     pause(0.5)
 end
 xline(nyq_freq);
 xlabel('Frequency (rad/s)'); ylabel('Gain');
