@@ -118,6 +118,10 @@ for i = 1:length(combined_Xdata)
     subbatch = combined_Xdata{i};
     mean_matrix(i,:) = [mean(subbatch(1,:)) mean(subbatch(2,:)) mean(subbatch(3,:)) mean(subbatch(4,:))];
 end
+median1 = median(mean_matrix(:,1));
+median2 = median(mean_matrix(:,2));
+median3 = median(mean_matrix(:,3));
+median4 = median(mean_matrix(:,4));
 % figure; plot(stats_matrix)
 
 % visualize the distribution of ranges (max-min) of signal
@@ -174,9 +178,9 @@ for row = 1:4
             
             % add sine wave to 1st, 2nd, 3rd, 4th row
             new_Xdata = [ones(1,subbatch_length)*avg_capstan_speed; 
-                         ones(1,subbatch_length)*median(mean_matrix(:,2));
-                         ones(1,subbatch_length)*median(mean_matrix(:,3)); 
-                         ones(1,subbatch_length)*median(mean_matrix(:,4))];
+                         ones(1,subbatch_length)*median2;
+                         ones(1,subbatch_length)*median3; 
+                         ones(1,subbatch_length)*median4];
 
             new_Xdata(row,:) = new_Xdata(row,:) + sine_wave;
     
@@ -239,7 +243,7 @@ end
 %% plot simulated bode
 clc; close all;
 
-row = 4; % 1, 2, 3, 4
+row = 1; % 1, 2, 3, 4
 
 load(sprintf('sim_bode_results\\simulated_bode_%d.mat',row));
 
@@ -264,7 +268,7 @@ for A = 2:size(bode_fit_obj,1)
         for i = 1:length(row)
             row(i) = abs(bode_fit_obj{A,i}.a)/all_A(A);
         end
-        plot(all_w, row)
+        plot(all_w, row) % mag2db(row)?
     end
 %     pause(0.5)
 end
@@ -278,7 +282,7 @@ latexify_plot;
 figure; axes('XScale', 'log', 'YScale', 'log');
 hold on;
 for A = 2:size(bode_p2p,1)
-    plot(all_w, bode_p2p(A,:)./all_A(A))
+    plot(all_w, bode_p2p(A,:)./all_A(A)) % mag2db()?
 end
 xline(nyq_freq);
 xlabel('Frequency (rad/s)'); ylabel('Gain');
