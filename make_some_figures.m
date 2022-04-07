@@ -24,10 +24,6 @@ fltLEN = 21;
 bPlot = 0; % Plot batch
 PrefltLEN = 1;
 
-set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
-set(groot, 'defaultLegendInterpreter','latex');
-set(groot, 'defaultTextInterpreter','latex');
-
 if exist('all_file_data.mat', 'file') ~= 2
     all_file_data = cell(length(all_files),2);
     
