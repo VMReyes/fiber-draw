@@ -26,7 +26,7 @@ bPlot = 0; % Plot batch
 PrefltLEN = 1;
 
 %% Choose model / order (BY SINGLE SUBBATCH) (ARMAX)
-diary on; dt = 1;
+diary on; dt = 0.5;
 fit_matrix_bool = cell(length(all_files), 1);
 fit_matrix = cell(length(all_files), 1);
 folder_name = "_armax_all_2";
