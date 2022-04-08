@@ -1,5 +1,5 @@
 %% generate simulated bode (typical runtime: 2 hrs)
-clc; clear; close all;
+clc; close all;
 load("run_results\architecture_experiment.mat");
 load("alldatatrain\all_data_processed_4in_1out_yremove125.mat");
 curr_path = 'C:\Users\georg\Desktop\fiber-draw';
@@ -113,8 +113,10 @@ if (row == 4 &&j == length(all_w))
 end
 
 %% plot 3d
-load('bode_fft0.mat');
-mesh(all_w/(2*pi), f, all_ffts{4})
+cd(curr_path);
+load([curr_path '\' folder_name '\' 'bode_fft.mat']);
+mesh(all_w/(2*pi), f, all_ffts{4}); 
+latexify_plot;
 set(gca, 'ZLim', get(gca, 'ZLim') .* [0 1] + [6e-6 0]);
 xlabel('Input frequency (Hz)');
 ylabel('Output frequency (Hz)');
