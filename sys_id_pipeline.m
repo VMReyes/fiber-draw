@@ -3,8 +3,8 @@ clear; clc; close all;
 % parameters
 strDataPath = 'C:\Users\georg\Dropbox (MIT)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
 all_files   = dir(strDataPath);
-% curr_path   = 'C:\Users\georg\Desktop\fiber-draw';
-curr_path   = 'D:\GEORGE\fiber-draw';
+curr_path   = 'C:\Users\georg\Desktop\fiber-draw';
+% curr_path   = 'D:\GEORGE\fiber-draw';
 
 % BatchInfo Parameters
 bXLSLoad = 1;
@@ -48,6 +48,8 @@ if exist('all_file_data.mat', 'file') ~= 2
     end
 
     save('all_file_data','all_file_data')
+else
+    load("all_file_data.mat")
 end
 
 disp('Done Loading!')
@@ -78,9 +80,6 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
 
         cd(curr_path)
 
-        fig = figure(1);
-        set(gcf, 'Position', [229 222 754 696])
-
         for i = 1:length(XTrainTranspose)
             xs = cell2mat(XTrainTranspose(i));
             ys = cell2mat(YTrainTranspose(i));
@@ -88,8 +87,7 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
             bfd = ys(1,:); tension = ys(2,:);
 
             dt = 0.5;
-%             iddata_tension_to_power     = iddata(furnace_power', tension', dt);
-            iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
+            iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd'-125,     dt);
 
             for b = 1:max_order for a = 1:b % for k = 1:4
                 if ~(a<4 && b<4)
@@ -106,6 +104,7 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
                         fit_matrix{file_ind}(i, (a-1)*max_order+b) = abs(fit);
 
                         if plot_sysid_process
+                            fig = figure(1); set(gcf, 'Position', [229 222 754 696])
                             subplot(2,1,1); 
                             compare(iddata_bfd_to_capstan_speed, sys_kd);
 %                                 compare(iddata_tension_to_power, sys_kt);
@@ -159,7 +158,7 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
             bfd = ys(1,:); tension = ys(2,:);
 
 %             iddata_tension_to_power     = iddata(furnace_power', tension', dt);
-            iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
+            iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd'-125,     dt);
 
             sys_kd = oe(iddata_bfd_to_capstan_speed,  [5 5 3]);
 %                         sys_kt = oe(iddata_tension_to_power,  [a b k]);
@@ -249,7 +248,7 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
 
             dt = 0.5;
 %             iddata_tension_to_power     = iddata(furnace_power', tension', dt);
-            iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
+            iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd'-125,     dt);
 
             for b = 1:max_order for a = 1:max_order for c = 1:max_order 
                 if ~(a<4 && b<4 && c<4)
@@ -277,6 +276,79 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
     
                             cd(folder_name);
                             saveas(fig, sprintf('%d,%d,(%d,%d,%d)',file_ind,i,a,b,c),'png');
+                            cd ..;
+                        end
+                    end
+                end
+            end; end; end
+        end
+    end
+end
+disp('Done!')
+diary off;
+save('fit_results'+folder_name, 'fit_matrix', 'fit_matrix_bool');
+
+%% Grid Search Order (OE, kt)
+max_order = 10;
+plot_sysid_process = false;
+
+diary on;
+fit_matrix_bool = cell(length(all_files), 1);
+fit_matrix = cell(length(all_files), 1);
+folder_name = "_kt_oe_final";
+
+if plot_sysid_process && exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+        
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
+
+        fit_matrix_bool{file_ind} = zeros(length(XTrainTranspose), max_order*max_order);
+        fit_matrix{file_ind} = zeros(length(XTrainTranspose), max_order*max_order);
+
+        cd(curr_path)
+
+        fig = figure(1);
+        set(gcf, 'Position', [229 222 754 696])
+
+        for i = 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
+            bfd = ys(1,:); tension = ys(2,:);
+
+            dt = 0.5;
+            iddata_tension_to_power     = iddata(furnace_power', tension'-median(tension), dt);
+
+            for b = 1:max_order for a = 1:b for k = 1:4
+                if ~(a<4 && b<4)
+                    sys_kt = oe(iddata_tension_to_power,  [a b k]);
+
+                    [y_hat, fit, x0] = compare(iddata_tension_to_power, sys_kt);
+                    fprintf('file %d/%d\t subbatch %d/%d \t %d \t %d \t %d\t %2.4f\n', ...
+                            file_ind,length(all_files),i,length(XTrainTranspose), a, b, k, fit)
+
+                    if (30 < abs(fit) && abs(fit) < 150)
+                        fit_matrix_bool{file_ind}(i, (a-1)*max_order*4+(b-1)*4+k) = 1;
+                        fit_matrix{file_ind}(i, (a-1)*max_order*4+(b-1)*4+k) = abs(fit);
+
+                        if plot_sysid_process
+                            subplot(2,1,1); 
+                            compare(iddata_tension_to_power, sys_kt);
+                            title(sprintf('%d, %d, (%d,%d,%d)', file_ind,i,a,b,k));
+                            ax = gca; ax.Legend.Location = 'southeast';
+    
+                            subplot(2,1,2);
+                            plot_fft(capstan_speed, capstan_speed, y_hat.OutputData, y_hat.OutputData)
+    
+                            cd(folder_name);
+                            saveas(fig, sprintf('%d,%d,(%d,%d,%d)',file_ind,i,a,b,k),'png');
                             cd ..;
                         end
                     end
