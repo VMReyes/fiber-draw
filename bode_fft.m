@@ -1,8 +1,9 @@
-%% generate simulated bode (typical runtime: 2 hrs)
-clc; close all;
+%% Init
+clc; clear; close all; 
 load("run_results\architecture_experiment.mat");
 load("alldatatrain\all_data_processed_4in_1out_yremove125.mat");
-curr_path = 'C:\Users\georg\Desktop\fiber-draw';
+% curr_path = 'C:\Users\georg\Desktop\fiber-draw';
+curr_path = 'D:\GEORGE\fiber-draw';
 cd(curr_path);
 folder_name = 'sim_bode_results';
 if exist(folder_name, 'dir') ~= 7
@@ -47,6 +48,7 @@ plot_progress = false;
 
 if (plot_progress) figure(1); latexify_plot; end
 
+%% generate simulated bode (typical runtime: 2 hrs)
 for row = 1:4
     A = all_A(row);
     all_ffts{row} = zeros(length(f), length(all_w));
@@ -123,6 +125,7 @@ ylabel('Output frequency (Hz)');
 zlabel('FFT Amplitude');
 axis square; grid on; grid minor; box on;
 %% plot amplitude slice
+all_w = logspace(-2,log10(nyq_freq),100);
 w = all_w(50);
 all_max_A = [700 10 3 15]; % 1st, 2nd, 3rd, 4th row
 for row = 1:4
@@ -149,10 +152,6 @@ for row = 1:4
     
         net = deep_lstm.resetState();
         y_pred = net.predict(new_Xdata, "MiniBatchSize", 1);
-    
-        T = 1/sampling_freq;             % Sampling period       
-        L = length(y_pred);             % Length of signal
-        t = (0:L-1)*T;        % Time vector
         
         subplot(2,1,1); plot(t,y_pred)
         y_pred_fft = fft(y_pred);

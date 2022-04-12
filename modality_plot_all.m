@@ -91,7 +91,7 @@ for file_ind = 1:length(all_files)
                         ax = gca; ax.Legend.Location = 'southeast';
 
                         subplot(2,1,2);
-                        plot_fft(capstan_speed, capstan_speed, y_hat.OutputData, y_hat.OutputData)
+                        plot_fft(capstan_speed, y_hat.OutputData)
 
                         saveas(fig, sprintf('%s\\%s\\%d,%d,(%d,%d,%d,%d)', curr_path, folder_name, file_ind,i,a,b,c,k),'png');
                     end
@@ -174,7 +174,7 @@ for file_ind = 1:length(all_files)
                             ax = gca; ax.Legend.Location = 'southeast';
     
                             subplot(2,1,2);
-                            plot_fft(capstan_speed, capstan_speed, y_hat.OutputData, y_hat.OutputData)
+                            plot_fft(capstan_speed, y_hat.OutputData)
     
                             cd(folder_name);
                             saveas(fig, sprintf('%d,%d,(%d,%d,%d)',file_ind,i,a,b,k),'png');
@@ -347,7 +347,7 @@ for file_ind = 1:length(all_files)
                 ax = gca; ax.Legend.Location = 'southeast';
 
                 subplot(5,2,[3, 4]); plot(res);
-                subplot(5,2,[5, 6]); plot_fft(y, y, y_hat, y_hat);
+                subplot(5,2,[5, 6]); plot_fft(y, y_hat);
 
                 subplot(5,2,7); plot(y,y_hat, '.'); hold on; 
 %                 plot(linspace(min(min(y,y_hat)),max(max(y,y_hat)),length(y_hat)),linspace(min(min(y,y_hat)),max(max(y,y_hat)),length(y_hat)),'--');
@@ -474,15 +474,13 @@ end
 
 
 %% helper function
-function [f] = plot_fft(Y, Y_filt, Ypredict, Ypredict_filt)
+function [f] = plot_fft(Y, Ypredict)
     %take the FFT
     FY = fft(Y);
     FY_s = fftshift(FY);
-    FY_filt = fft(Y_filt);
     %take the FFT
     FYpredict = fft(Ypredict);
     FYpredict_s = fftshift(FYpredict);
-    FYpredict_filt = fft(Ypredict_filt);
 
     %the radial frequencies
     frq_discretes = 2/length(Y).*([0:(length(Y)-1)]-length(Y)/2);
