@@ -2,8 +2,8 @@
 clc; clear; close all; 
 load("run_results\architecture_experiment.mat");
 load("alldatatrain\all_data_processed_4in_1out_yremove125.mat");
-% curr_path = 'C:\Users\georg\Desktop\fiber-draw';
-curr_path = 'D:\GEORGE\fiber-draw';
+curr_path = 'C:\Users\georg\Desktop\fiber-draw';
+% curr_path = 'D:\GEORGE\fiber-draw';
 cd(curr_path);
 folder_name = 'sim_bode_results';
 if exist(folder_name, 'dir') ~= 7
@@ -117,17 +117,85 @@ end
 %% plot 3d
 cd(curr_path);
 load([curr_path '\' folder_name '\' 'bode_fft.mat']);
-mesh(all_w/(2*pi), f, all_ffts{4}); 
+for row = 1:4
+figure; mesh(all_w/(2*pi), f, all_ffts{row}); 
 latexify_plot;
-set(gca, 'ZLim', get(gca, 'ZLim') .* [0 1] + [6e-6 0]);
+set(gca, 'ZLim', get(gca, 'ZLim') .* [0 1] + [7e-6 0]);
 xlabel('Input frequency (Hz)');
 ylabel('Output frequency (Hz)');
 zlabel('FFT Amplitude');
 axis square; grid on; grid minor; box on;
-%% plot amplitude slice
+end
+
+%% gather bode profile of many amplitudes
+all_max_A = [700 10 3 15]; % 1st, 2nd, 3rd, 4th row
+all_w = logspace(-2,log10(nyq_freq),100);
+bode_profile = zeros(length(all_A), length(all_w));
+for row = 1:4
+    if row == 1
+        all_A = 5:5:all_max_A(row);
+    else
+        all_A = 0:0.1:all_max_A(row);
+    end
+
+    for i = 1:length(all_A)
+
+        for j = 1:length(all_w)
+            A = all_A(i); w = all_w(j);
+            sine_wave = A * sin(w*t);
+
+            % add sine wave to 1st, 2nd, 3rd, 4th row
+            new_Xdata = [ones(1,subbatch_length)*avg_capstan_speed;
+                         ones(1,subbatch_length)*median2;
+                         ones(1,subbatch_length)*median3;
+                         ones(1,subbatch_length)*median4];
+
+            new_Xdata(row,:) = new_Xdata(row,:) + sine_wave;
+
+            % see, it's similar to input!
+            % figure(6); plot(combined_Xdata{1}'); hold on; plot(new_Xdata', 'k'); hold off;
+
+            net = deep_lstm.resetState();
+            y_pred = net.predict(new_Xdata, "MiniBatchSize", 1);
+
+            y_pred_fft = fft(y_pred);
+            P2 = abs(y_pred_fft/L);
+            P1 = P2(1:L/2+1);
+            P1(2:end-1) = 2*P1(2:end-1);
+
+            bode_profile(i,j) = max(P1);
+
+            if plot_progress
+                peaks_plot_progress = ones(size(P1))*nan;
+                peaks_plot_progress(P1==max(P1)) = max(P1);
+                disp('here:')
+                disp([f(find(P1==max(P1),1,'first')), w/(2*pi)])
+                subplot(2,1,1); plot(t,y_pred)
+                subplot(2,1,2); plot(f,P1); hold on;
+                plot(f, peaks_plot_progress, '.', 'MarkerSize', 20);
+                hold off;
+                xlimit_ind = find(P1 > 1e-4, 1, 'last');
+                xlim([0, f(xlimit_ind)])
+                pause(0.1)
+            end
+
+            fprintf('row: %d\t A: %d/%d\t freq: %d/%d\n', row, i, length(all_A), j, length(all_w))
+        end
+    end
+end
+
+if (row == 4 && i == length(all_A) && j == length(all_w))
+    save(sprintf('%s\\%s\\bode_profile.mat', curr_path, folder_name),"bode_profile");
+end
+
+%% plot bode profile 
+figure; loglog(all_w, test_bode);
+
+%% plot amplitude slice (not used)
 all_w = logspace(-2,log10(nyq_freq),100);
 w = all_w(50);
 all_max_A = [700 10 3 15]; % 1st, 2nd, 3rd, 4th row
+figure;
 for row = 1:4
     if row == 1
         all_A = 5:5:all_max_A(row);
