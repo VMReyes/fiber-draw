@@ -127,7 +127,7 @@ zlabel('FFT Amplitude');
 axis square; grid on; grid minor; box on;
 end
 
-%% gather bode profile of many amplitudes
+%% gather bode profile of many amplitudes (estimated runtime: 4 hrs)
 all_max_A = [700 10 3 15]; % 1st, 2nd, 3rd, 4th row
 all_w = logspace(-2,log10(nyq_freq),100);
 bode_profile = zeros(length(all_A), length(all_w));
@@ -186,10 +186,18 @@ end
 
 if (row == 4 && i == length(all_A) && j == length(all_w))
     save(sprintf('%s\\%s\\bode_profile.mat', curr_path, folder_name),"bode_profile");
+    disp('Saved and done!')
+else
+    disp('Done.')
 end
 
-%% plot bode profile 
-figure; loglog(all_w, test_bode);
+%% plot bode profile (fft amplitude is different from actual)
+load('sim_bode_results\bode_profile.mat');
+figure; axes('XScale', 'log', 'YScale', 'log')
+latexify_plot; hold on;
+for i = 1:size(bode_profile,1)
+    loglog(all_w, bode_profile(i,:));
+end
 
 %% plot amplitude slice (not used)
 all_w = logspace(-2,log10(nyq_freq),100);
