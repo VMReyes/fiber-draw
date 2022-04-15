@@ -572,7 +572,7 @@ sys_kt_total = oe(merge(all_iddata{:}), selected_order);
 disp('Done with oe(merge(), [])!')
 save("sys_kt_total_oe.mat", "all_sys", "all_iddata", "sys_kt_total", "m", "tv");
 
-%% plot merged models
+%% plot noise variances
 % load('sys_kd_total_oe.mat');
 % load('sys_kd_total_armax.mat');
 load('sys_kt_total_oe.mat')
@@ -608,15 +608,21 @@ load sys_kd_total_armax.mat
 % load sys_kt_total_oe.mat
 % % tv = 0.0122
 
-m
-[A,B,C,D,F,dA,dB,dC,dD,dF] = polydata(m)
-[PVEC, DPVEC]  = getpvec(m)
-covariance = getcov(m)
+% m
+% [A,B,C,D,F,dA,dB,dC,dD,dF] = polydata(m)
+% [PVEC, DPVEC]  = getpvec(m)
+% covariance = getcov(m)
+% 
+% sys_kd_total
+% [A,B,C,D,F,dA,dB,dC,dD,dF] = polydata(sys_kd_total)
+% [PVEC, DPVEC]  = getpvec(sys_kd_total)
+% covariance = getcov(sys_kd_total)
 
-sys_kd_total
-[A,B,C,D,F,dA,dB,dC,dD,dF] = polydata(sys_kd_total)
-[PVEC, DPVEC]  = getpvec(sys_kd_total)
-covariance = getcov(sys_kd_total)
+% sys_kd_total.Report
+% sys_kd_total.Report.Fit
+mean(abs(sys_kd_total.Report.Fit.FitPercent))
+mean(sys_kd_total.Report.Fit.MSE)
+
 %% analyze - convert cell to matrix
 
 fit_matrix_all = [];

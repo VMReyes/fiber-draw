@@ -70,10 +70,6 @@ if ~curr_file.isdir
     capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
     bfd = ys(1,:); tension = ys(2,:);
 
-    dt = 1;
-        iddata_tension_to_power     = iddata(furnace_power', tension', dt);
-%             iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
-
     subplot(2,1,1); plot(bfd-125); title('Input: Bare Fiber Diameter Error'); ylabel('BFD ($\mu m$)')
     subplot(2,1,2); plot(capstan_speed); title('Output: Capstan Speed'); ylabel('Capstan Speed (m/min)');
     xlabel('Samples'); latexify_plot
@@ -82,7 +78,7 @@ end
 %% Plot Input / Output (specific subbatch)
 
 file_num = 4;
-subbatch_num = 11;
+subbatch_num = 7;
 
 % for file_num = 1:16
     curr_file = all_files(file_num);
@@ -105,8 +101,10 @@ subbatch_num = 11;
             %             iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
             fprintf('%d\t %d\n', file_num, subbatch_num)
             subplot(2,1,1); plot(tension - median(tension)); title('Input: Tension Error'); ylabel('Tension (g)')
+            xlim([0 length(tension)])
             subplot(2,1,2); plot(furnace_power); title('Output: Furnace Power'); ylabel('Furnace Power (\%)');
-            xlabel('Samples'); latexify_plot; pause(2)
+            xlim([0 length(tension)])
+            xlabel('Samples'); latexify_plot; pause(0.5)
             
 %         end
     end
