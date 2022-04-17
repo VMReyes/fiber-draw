@@ -424,6 +424,85 @@ end
 figure(2); plot(all_vars, '.'); 
 ylim([0 1e5])
 
+%% Merge Models (ARMAX)
+
+selected_order = [4 3 3 4];
+
+all_sys = {};
+all_iddata = {};
+dt = 0.5;
+plot_sysid_process = false;
+folder_name = "_kt_oe_final_select";
+if plot_sysid_process && exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+        
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
+
+        cd(curr_path)
+
+        for i = 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
+            bfd = ys(1,:); tension = ys(2,:);
+
+            iddata_tension_to_power     = iddata(furnace_power', tension'-median(tension), dt);
+
+            sys_kt = armax(iddata_tension_to_power,  selected_order);
+
+            [y_hat, fit, x0] = compare(iddata_tension_to_power, sys_kt);
+
+            fprintf('file %d/%d\t subbatch %d/%d \t %2.4f\n', ...
+                    file_ind,length(all_files),i,length(XTrainTranspose), fit)
+
+            if (30 < abs(fit) && abs(fit) < 150)
+                if isempty(all_iddata)
+                    all_iddata = {iddata_tension_to_power};
+                else
+                    all_iddata = horzcat(all_iddata, {iddata_tension_to_power});
+                end
+
+                if isempty(all_sys)
+                    all_sys = {sys_kt};
+                else
+                    all_sys = horzcat(all_sys, {sys_kt});
+                end
+
+                if plot_sysid_process
+                    fig = figure(1); set(gcf, 'Position', [229 222 754 696])
+                    subplot(2,1,1); 
+                    compare(iddata_bfd_to_capstan_speed, sys_kt);
+                    title(sprintf('File %d, Subbatch %d', file_ind,i));
+                    ax = gca; ax.Legend.Location = 'southeast';
+
+                    subplot(2,1,2);
+                    plot_fft_comparison(capstan_speed, y_hat.OutputData)
+
+                    cd(folder_name);
+                    saveas(fig, sprintf('%d,%d',file_ind,i),'png');
+                    cd ..;
+                end
+            end
+        end
+    end
+end
+disp('Done Iterating!');
+[m, tv] = merge(all_sys{:});
+sys_kt_total = armax(merge(all_iddata{:}), selected_order);
+disp('Done with armax(merge(), [])!')
+save("sys_kt_total_armax.mat", "all_sys", "all_iddata", "sys_kt_total", "m", "tv");
+all_vars = zeros(1, length(all_sys));
+for i = 1:length(all_sys)
+    all_vars(i) = all_sys{i}.NoiseVariance;
+end
+figure(2); plot(all_vars, '.'); 
 
 %% analyze - convert cell to matrix
 
