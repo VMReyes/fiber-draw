@@ -4,8 +4,8 @@ clear; clc; close all;
 % parameters
 strDataPath = 'C:\Users\georg\Dropbox (MIT)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
 all_files   = dir(strDataPath);
-% curr_path   = 'C:\Users\georg\Desktop\fiber-draw';
-curr_path   = 'D:\GEORGE\fiber-draw';
+curr_path   = 'C:\Users\georg\Desktop\fiber-draw';
+% curr_path   = 'D:\GEORGE\fiber-draw';
 
 % BatchInfo Parameters
 bXLSLoad = 1;
@@ -343,7 +343,7 @@ disp('Done!')
 diary off;
 save('fit_results'+folder_name, 'fit_matrix', 'fit_matrix_bool');
 
-%% Merge Models (OE)
+%% Merge Models (OE, kd)
 
 selected_order = [1 4 3];
 
@@ -414,19 +414,91 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
 end
 disp('Done Iterating!');
 [m, tv] = merge(all_sys{:});
+disp('Done with merge(sys)!')
 sys_kd_total = oe(merge(all_iddata{:}), selected_order);
 disp('Done with oe(merge(), [])!')
 save("sys_kd_total_oe.mat", "all_sys", "all_iddata", "sys_kd_total", "m", "tv");
-all_vars = zeros(1, length(all_sys));
-for i = 1:length(all_sys)
-    all_vars(i) = all_sys{i}.NoiseVariance;
+
+
+%% Merge Models (ARMAX, kd)
+
+selected_order = [4 3 1 3];
+
+all_sys = {};
+all_iddata = {};
+dt = 0.5;
+plot_sysid_process = false;
+folder_name = "_kd_armax_final_select";
+if plot_sysid_process && exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
 end
-figure(2); plot(all_vars, '.'); 
-ylim([0 1e5])
 
-%% Merge Models (ARMAX)
+for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+        
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
 
-selected_order = [4 3 3 4];
+        cd(curr_path)
+
+        for i = 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
+            bfd = ys(1,:); tension = ys(2,:);
+
+            iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd'-125,     dt);
+
+            sys_kd = armax(iddata_bfd_to_capstan_speed,  selected_order);
+
+            [y_hat, fit, x0] = compare(iddata_bfd_to_capstan_speed, sys_kd);
+
+            fprintf('file %d/%d\t subbatch %d/%d \t %2.4f\n', ...
+                    file_ind,length(all_files),i,length(XTrainTranspose), fit)
+
+            if (30 < abs(fit) && abs(fit) < 150)
+                if isempty(all_iddata)
+                    all_iddata = {iddata_bfd_to_capstan_speed};
+                else
+                    all_iddata = horzcat(all_iddata, {iddata_bfd_to_capstan_speed});
+                end
+
+                if isempty(all_sys)
+                    all_sys = {sys_kd};
+                else
+                    all_sys = horzcat(all_sys, {sys_kd});
+                end
+
+                if plot_sysid_process
+                    fig = figure(1); set(gcf, 'Position', [229 222 754 696])
+                    subplot(2,1,1); 
+                    compare(iddata_bfd_to_capstan_speed, sys_kd);
+                    title(sprintf('File %d, Subbatch %d', file_ind,i));
+                    ax = gca; ax.Legend.Location = 'southeast';
+
+                    subplot(2,1,2);
+                    plot_fft_comparison(capstan_speed, y_hat.OutputData)
+
+                    cd(folder_name);
+                    saveas(fig, sprintf('%d,%d',file_ind,i),'png');
+                    cd ..;
+                end
+            end
+        end
+    end
+end
+disp('Done Iterating!');
+[m, tv] = merge(all_sys{:});
+disp('Done with merge(sys)!')
+sys_kd_total = armax(merge(all_iddata{:}), selected_order);
+disp('Done with oe(merge(), [])!')
+save("sys_kd_total_armax.mat", "all_sys", "all_iddata", "sys_kd_total", "m", "tv");
+
+%% Merge Models (OE, kt)
+
+selected_order = [4 5 4];
 
 all_sys = {};
 all_iddata = {};
@@ -454,10 +526,10 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
             bfd = ys(1,:); tension = ys(2,:);
 
             iddata_tension_to_power     = iddata(furnace_power', tension'-median(tension), dt);
+            
+            sys_kd = oe(iddata_tension_to_power,  selected_order);
 
-            sys_kt = armax(iddata_tension_to_power,  selected_order);
-
-            [y_hat, fit, x0] = compare(iddata_tension_to_power, sys_kt);
+            [y_hat, fit, x0] = compare(iddata_tension_to_power, sys_kd);
 
             fprintf('file %d/%d\t subbatch %d/%d \t %2.4f\n', ...
                     file_ind,length(all_files),i,length(XTrainTranspose), fit)
@@ -470,15 +542,15 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
                 end
 
                 if isempty(all_sys)
-                    all_sys = {sys_kt};
+                    all_sys = {sys_kd};
                 else
-                    all_sys = horzcat(all_sys, {sys_kt});
+                    all_sys = horzcat(all_sys, {sys_kd});
                 end
 
                 if plot_sysid_process
                     fig = figure(1); set(gcf, 'Position', [229 222 754 696])
                     subplot(2,1,1); 
-                    compare(iddata_bfd_to_capstan_speed, sys_kt);
+                    compare(iddata_tension_to_power, sys_kd);
                     title(sprintf('File %d, Subbatch %d', file_ind,i));
                     ax = gca; ax.Legend.Location = 'southeast';
 
@@ -495,14 +567,61 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
 end
 disp('Done Iterating!');
 [m, tv] = merge(all_sys{:});
-sys_kt_total = armax(merge(all_iddata{:}), selected_order);
-disp('Done with armax(merge(), [])!')
-save("sys_kt_total_armax.mat", "all_sys", "all_iddata", "sys_kt_total", "m", "tv");
+disp('Done with merge(sys)!')
+sys_kt_total = oe(merge(all_iddata{:}), selected_order);
+disp('Done with oe(merge(), [])!')
+save("sys_kt_total_oe.mat", "all_sys", "all_iddata", "sys_kt_total", "m", "tv");
+
+%% plot noise variances
+% load('sys_kd_total_oe.mat');
+% load('sys_kd_total_armax.mat');
+load('sys_kt_total_oe.mat')
+
 all_vars = zeros(1, length(all_sys));
 for i = 1:length(all_sys)
     all_vars(i) = all_sys{i}.NoiseVariance;
 end
-figure(2); plot(all_vars, '.'); 
+figure(2); 
+% kd_oe
+% histogram(all_vars, 100, 'BinLimits', [0 5e3]) 
+% title('Noise Variances of OE Models for $K_d$ Controller')
+
+% kd_armax
+% histogram(all_vars, 100);
+% title('Noise Variances of ARMAX Models for $K_d$ Controller')
+
+% kt_oe
+histogram(all_vars, 100, 'BinLimits', [0 2]);
+title('Noise Variances of OE Models for $K_t$ Controller')
+latexify_plot
+
+%% merged models misc
+clc;
+
+% load sys_kd_total_oe.mat
+% % tv = 0.0121
+
+
+load sys_kd_total_armax.mat
+% % tv = 499.5298
+
+% load sys_kt_total_oe.mat
+% % tv = 0.0122
+
+% m
+% [A,B,C,D,F,dA,dB,dC,dD,dF] = polydata(m)
+% [PVEC, DPVEC]  = getpvec(m)
+% covariance = getcov(m)
+% 
+% sys_kd_total
+% [A,B,C,D,F,dA,dB,dC,dD,dF] = polydata(sys_kd_total)
+% [PVEC, DPVEC]  = getpvec(sys_kd_total)
+% covariance = getcov(sys_kd_total)
+
+% sys_kd_total.Report
+% sys_kd_total.Report.Fit
+mean(abs(sys_kd_total.Report.Fit.FitPercent))
+mean(sys_kd_total.Report.Fit.MSE)
 
 %% analyze - convert cell to matrix
 

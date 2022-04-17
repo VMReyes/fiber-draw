@@ -46,6 +46,8 @@ if exist('all_file_data.mat', 'file') ~= 2
     end
 
     save('all_file_data','all_file_data')
+else
+    load("all_file_data.mat")
 end
 
 disp('Done Loading!')
@@ -68,26 +70,58 @@ if ~curr_file.isdir
     capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
     bfd = ys(1,:); tension = ys(2,:);
 
-    dt = 1;
-        iddata_tension_to_power     = iddata(furnace_power', tension', dt);
-%             iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
-
-    subplot(2,1,1); plot(bfd); title('Input: Bare Fiber Diameter'); ylabel('BFD ($\mu m$)')
+    subplot(2,1,1); plot(bfd-125); title('Input: Bare Fiber Diameter Error'); ylabel('BFD ($\mu m$)')
     subplot(2,1,2); plot(capstan_speed); title('Output: Capstan Speed'); ylabel('Capstan Speed (m/min)');
-    xlabel('Samples')
+    xlabel('Samples'); latexify_plot
 end
 
+%% Plot Input / Output (specific subbatch)
+
+file_num = 4;
+subbatch_num = 7;
+
+% for file_num = 1:16
+    curr_file = all_files(file_num);
+    if ~curr_file.isdir
+
+        XTrainTranspose = all_file_data{file_num,1};
+        YTrainTranspose = all_file_data{file_num,2};
+
+%         for subbatch_num = 1:length(XTrainTranspose)
+            fig = figure(1);
+            set(gcf, 'Position', [229 222 754 696])
+
+            xs = cell2mat(XTrainTranspose(subbatch_num));
+            ys = cell2mat(YTrainTranspose(subbatch_num));
+            capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
+            bfd = ys(1,:); tension = ys(2,:);
+
+            dt = 0.5;
+            iddata_tension_to_power     = iddata(furnace_power', tension', dt);
+            %             iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd',     dt);
+            fprintf('%d\t %d\n', file_num, subbatch_num)
+            subplot(2,1,1); plot(tension - median(tension)); title('Input: Tension Error'); ylabel('Tension (g)')
+            xlim([0 length(tension)])
+            subplot(2,1,2); plot(furnace_power); title('Output: Furnace Power'); ylabel('Furnace Power (\%)');
+            xlim([0 length(tension)])
+            xlabel('Samples'); latexify_plot; pause(0.5)
+            
+%         end
+    end
+% end
 %% data wrangling
 disp('Started...')
-for curr_file_ind = 3:3%16
-% curr_file_ind = 3; %3 / 20;
-example_bfd = readmatrix([strDataPath all_files(curr_file_ind).name], 'Range', 'C:C');
-example_bfd(example_bfd > 126) = 125;
-example_bfd(example_bfd < 124) = 125;
+for curr_file_ind = 3:3%16 %3 / 20;
+% example_bfd = readmatrix([strDataPath all_files(curr_file_ind).name], 'Range', 'C:C');
+% example_bfd(example_bfd > 126) = 125;
+% example_bfd(example_bfd < 124) = 125;
 
 controller_on = readmatrix([strDataPath all_files(curr_file_ind).name], 'Range', 'Q:Q');
 
-example_bfd(controller_on ~=1) = 125;
+% example_bfd(controller_on ~=1) = 125;
+
+tension = readmatrix([strDataPath all_files(curr_file_ind).name], 'Range', 'G:G');
+tension(controller_on ~= 1) = 120;
 
 figure; set(gcf, 'Position', [96 558 1429 420]);
 plot(example_bfd); ylim([124 126]); xlim([0 1e5])
