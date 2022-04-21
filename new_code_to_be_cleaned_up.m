@@ -1,12 +1,11 @@
 %% Init
-% install Statistics and Machine Learning Toolbox
 clear; clc; close all;
 
 % parameters
 strDataPath = 'C:\Users\georg\Dropbox (MIT)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
 all_files   = dir(strDataPath);
-curr_path = 'C:\Users\georg\Desktop\MS Research\fiber-draw';
-% curr_path   = 'C:\Users\georg\Desktop\fiber-draw';
+% curr_path = 'C:\Users\georg\Desktop\MS Research\fiber-draw';
+curr_path   = 'C:\Users\georg\Desktop\fiber-draw';
 % curr_path   = 'D:\GEORGE\fiber-draw';
 
 % BatchInfo Parameters
@@ -30,6 +29,7 @@ PrefltLEN = 1;
 dt = 0.5;
 orders_kd_oe = [1 4 3];
 orders_kd_armax = [4 3 1 3];
+orders_kt_armax = [3 2 2 3];
 
 if exist('all_file_data.mat', 'file') ~= 2
     all_file_data = cell(length(all_files),2);
@@ -61,9 +61,9 @@ end
 
 disp('Done Loading!')
 
-%% PLOT ANALYSIS
+%% PLOT ANALYSIS (kd)
 
-folder_name = "_analysis_armax";
+folder_name = "_analysis_armax_kd";
 cd(curr_path)
 
 plot_residuals = false;
@@ -74,7 +74,7 @@ if plot_bode
     bodeopt.PhaseMatching = 'on';
     bodeopt.PhaseMatchingFreq = 10^-8;
     bodeopt.PhaseMatchingValue = 0;
-    fig2 = figure(2); set(gcf, 'Position', [4589.8 -225.4 809.6 1008])
+    fig2 = figure(2); set(gcf, 'Position', [1102, -14, 809, 1007])
     hold on; grid on; grid minor; latexify_plot
 end
 
@@ -97,14 +97,14 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
             bfd = ys(1,:); tension = ys(2,:);
 
             iddata_bfd_to_capstan_speed = iddata(capstan_speed', bfd'-125,     dt);
-%             sys_kd = oe(iddata_bfd_to_capstan_speed, orders_kd_oe);
+%            sys_kd = oe(iddata_bfd_to_capstan_speed, orders_kd_oe);
             sys_kd = armax(iddata_bfd_to_capstan_speed, orders_kd_armax);
-
             [y_hat, fit, ~] = compare(iddata_bfd_to_capstan_speed, sys_kd);
+
             fprintf('file %d/%d\t subbatch %d/%d %2.4f\n', ...
                     file_ind,length(all_files),i,length(XTrainTranspose), fit)
 
-            if (80 < fit && fit < 100)
+            if (80 < abs(fit) && abs(fit) < 100)
                 if plot_residuals
                     y = capstan_speed';
                     y_hat = y_hat.OutputData;
@@ -135,9 +135,9 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
                 end
 
                 if plot_bode
-                    fig2 = figure(2); [m,p] = bode(sys_kd, {10^-8, 10});
+                    fig2 = figure(2); [m,p] = bode(sys_kd, {10^-6, 10});
                     m = m(:); p = p(:); m = 20 * log10(m); p = p - p(1);
-                    bode(sys_kd, {10^-8, 10}, bodeopt);
+                    bode(sys_kd, {10^-6, 10}, bodeopt); 
                 end
             end
 
@@ -146,7 +146,100 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
 end
 
 if plot_bode
-    fig2 = figure(2); hold off;
+    fig2 = figure(2); grid on; grid minor; hold off;
+    saveas(fig2, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'png');  
+    saveas(fig2, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'fig');  
+end
+disp('Done!')
+
+%% PLOT ANALYSIS (kt)
+
+folder_name = "_analysis_armax_kt";
+cd(curr_path)
+
+plot_residuals = false;
+plot_bode = true;
+
+if plot_bode 
+    bodeopt = bodeoptions("cstprefs");
+    bodeopt.PhaseMatching = 'on';
+    bodeopt.PhaseMatchingFreq = 10^-8;
+    bodeopt.PhaseMatchingValue = 0;
+    fig2 = figure(2); set(gcf, 'Position', [1102, -14, 809, 1007])
+    hold on; grid on; grid minor; latexify_plot
+end
+
+if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
+
+        for i = 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
+            bfd = ys(1,:); tension = ys(2,:);
+
+            iddata_tension_to_power     = iddata(furnace_power', tension'-median(tension), dt);
+            sys_kt = armax(iddata_tension_to_power,  orders_kt_armax);
+            [y_hat, fit, x0] = compare(iddata_tension_to_power, sys_kt);
+
+%             fprintf('file %d/%d\t subbatch %d/%d %2.4f\n', ...
+%                     file_ind,length(all_files),i,length(XTrainTranspose), fit)
+
+            if (65 < abs(fit) && abs(fit) < 100)
+                if plot_residuals
+                    y = capstan_speed';
+                    y_hat = y_hat.OutputData;
+                    res = y - y_hat;
+                    [xcres,lags] = xcorr(res,res,'normalized');
+    
+                    fig1 = figure(1); set(gcf, 'Position', [4589.8 -225.4 809.6 1008]); latexify_plot;
+                    subplot(5,2,[1, 2]); compareplot(iddata_bfd_to_capstan_speed, sys_kt);
+                    ax = gca; ax.Legend.Location = 'southeast'; 
+                    
+                    t = linspace(0, length(res)/2, length(res));
+                    subplot(5,2,[3, 4]); plot(t,res); hold on; plot(t, ones(1,length(res))*mean(res), '--'); hold off;
+                    ylabel('Residual'); xlabel('Time (seconds)'); legend({'Residual', 'MSE'}); 
+                    xlim([0 length(res)/2])
+                    subplot(5,2,[5, 6]); plot_fft_comparison(y, y_hat);
+                    
+                    subplot(5,2,7); plot(y, y_hat, '.'); hold on; 
+                    plot(0:max(max(y),max(y_hat)), 0:max(max(y),max(y_hat)),'--','LineWidth',2);
+                    xlim([min(min(y),min(y_hat)), max(max(y),max(y_hat))]);
+                    ylim([min(min(y),min(y_hat)), max(max(y),max(y_hat))]);
+                    hold off; xlabel('Actual'); ylabel('Predicted'); 
+                    
+                    subplot(5,2,8); histogram(res, 50); title('Residual Histogram')
+                    subplot(5,2,9); normplot(res);
+                    subplot(5,2,10); plot(lags, xcres); title('Residual Autocorrelation')
+    
+                    saveas(fig1, sprintf('%s\\%s\\%d,%d', curr_path, folder_name, file_ind, i),'png');
+                end
+
+                if plot_bode
+                    fig2 = figure(2); [m,p] = bode(sys_kt, {10^-6, 10});
+                    m = m(:); p = p(:); m = 20 * log10(m); p = p - p(1);
+                    max(p)
+                    if (m(1) > 11 && max(p) <= 0)
+                        bode(sys_kt, {10^-6, 10}, bodeopt); 
+                    end
+                end
+            end
+
+        end
+    end
+end
+
+if plot_bode
+    fig2 = figure(2); grid on; grid minor; hold off;
     saveas(fig2, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'png');  
     saveas(fig2, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'fig');  
 end

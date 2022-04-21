@@ -28,7 +28,7 @@ combined_Xdata = cat(2, Xdata{:});
 combined_Ydata = cat(2, Ydata{:});
 
 sampling_freq = 2; % Hz
-nyq_freq = sampling_freq * 2*3 / 2;
+nyq_freq = sampling_freq * 2*3 / 2; % rad/s
 avg_capstan_speed = 2500; % 2500 or 2685
 subbatch_length = 8000;
 
@@ -130,13 +130,15 @@ end
 %% gather bode profile of many amplitudes (estimated runtime: 4 hrs)
 all_max_A = [700 10 3 15]; % 1st, 2nd, 3rd, 4th row
 all_w = logspace(-2,log10(nyq_freq),100);
-bode_profile = zeros(length(all_A), length(all_w));
+all_bode_profile = cell(4,1);
 for row = 1:4
     if row == 1
         all_A = 5:5:all_max_A(row);
     else
         all_A = 0:0.1:all_max_A(row);
     end
+
+    all_bode_profile{row} = zeros(length(all_A), length(all_w));
 
     for i = 1:length(all_A)
 
@@ -163,7 +165,7 @@ for row = 1:4
             P1 = P2(1:L/2+1);
             P1(2:end-1) = 2*P1(2:end-1);
 
-            bode_profile(i,j) = max(P1);
+            all_bode_profile{row}(i,j) = max(P1);
 
             if plot_progress
                 peaks_plot_progress = ones(size(P1))*nan;
@@ -185,18 +187,49 @@ for row = 1:4
 end
 
 if (row == 4 && i == length(all_A) && j == length(all_w))
-    save(sprintf('%s\\%s\\bode_profile.mat', curr_path, folder_name),"bode_profile");
+    save(sprintf('%s\\%s\\all_bode_profile.mat', curr_path, folder_name),"all_bode_profile");
     disp('Saved and done!')
 else
     disp('Done.')
 end
 
 %% plot bode profile (fft amplitude is different from actual)
-load('sim_bode_results\bode_profile.mat');
-figure; axes('XScale', 'log', 'YScale', 'log')
-latexify_plot; hold on;
-for i = 1:size(bode_profile,1)
-    loglog(all_w, bode_profile(i,:));
+clc; close all;
+load('sim_bode_results\all_bode_profile.mat');
+row_names = {'Capstan Speed', 'Furnace Power', 'Helium Temperature', 'Preform Velocity'};
+colors = {'black', 'red', 'blue', 'magenta'};
+for i = 1:length(all_bode_profile)
+    bode_profile = all_bode_profile{i};
+    figure; axes('XScale', 'log', 'YScale', 'log')
+    latexify_plot;
+    switch i
+        case 2
+            all_jp = [14 52];
+        case 4
+            all_jp = [14 80]; % [14 25 50 80 97 150];
+        case 1
+            all_jp = [75,];
+        case 3
+            all_jp = [25,];
+    end
+    
+    for j = 1:size(bode_profile, 1)
+        p = loglog(all_w, bode_profile(j,:));
+        p.Color(4) = 0.2; % set transparency
+        hold on;
+    end
+
+    for jp = 1:length(all_jp)
+        ind = all_jp(jp);
+        plot(all_w, bode_profile(ind,:), 'LineWidth', 2, 'Color', colors{jp});
+%         disp(jp);
+%         pause(0.5);
+%         hold off;
+    end
+    hold off;
+    title(sprintf('Bode Plot of %s Input to BFD', row_names{i}));
+    xlabel('Input Frequency (rad/s)'); ylabel('Amplitude Ratio');
+
 end
 
 %% plot amplitude slice (not used)
