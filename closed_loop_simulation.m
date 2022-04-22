@@ -87,11 +87,11 @@ disp("Init Complete!")
 %% Simulate
 
 for subbatch = 19 % good subbatches [16 18 19 29] [7 16 18 19 23 29 30 33 44 45]
-    x_sample = x_test{subbatch};
-    y_sample = y_test{subbatch};
+    x_sample = x_test{subbatch}; % rows: capstan speed, furnace power, He temp, preform velocity
+    y_sample = y_test{subbatch}; % just BFD error
 
     capstan_speed_prev = x_sample(1,1); % set to first value?
-    T = length(y_sample); % usually 8000 with some exceptions;
+    T = length(y_sample); % usually 8000 with some exceptions
 
     Kd_output_array = zeros(1, T); %uarray
     Kd_input_array = zeros(1, T); %earray
@@ -105,7 +105,8 @@ for subbatch = 19 % good subbatches [16 18 19 29] [7 16 18 19 23 29 30 33 44 45]
         Kd_output_array(t) = x_sample(1, t);
         capstan_speed_slope = (Kd_output_array(t) - capstan_speed_prev)/dt;
         preform_velocity = lookup_table_100(capstan_speed_slope);
-
+        Kt_output_array(t) = x_sample(2, t);
+%         Kt_input_array(t) = ???
         [net, curr_bfd_error] = predictAndUpdateState(net, [x_sample(1:3, t); preform_velocity]);
         nn_output(t) = curr_bfd_error + 125;
         Kd_input_array(t) = curr_bfd_error;
@@ -133,8 +134,12 @@ for subbatch = 19 % good subbatches [16 18 19 29] [7 16 18 19 23 29 30 33 44 45]
         preform_velocity = lookup_table_100(capstan_speed_slope);
 
         % ----------- Kt: tension error -> furnace power  -------------
-        
+%         Kt_input_array(t) = ??? % where is tension signal?
+        Kt_output = B_kt(4)*Kt_input_array(t-nk_kt-3) + B_kt(5)*Kt_input_array(t-nk_kt-4) ...
+                    + white_noise(t) + C_kt(2)*white_noise(t-1) + C_kt(3)*white_noise(t-2) ...
+                    - (A_kt(2)*Kt_output_array(t-1) + A_kt(3)*Kt_output_array(t-2) + A_kt(4)*Kt_output_array(t-3));
 
+        Kt_output_array(t) = Kt_output;
 
         % ----------- Combine  -------------
         nn_input = [Kd_output; x_sample(2:3, t); preform_velocity];
@@ -151,18 +156,34 @@ for subbatch = 19 % good subbatches [16 18 19 29] [7 16 18 19 23 29 30 33 44 45]
     fig = figure(1);
     subplot(3,1,1)
     plot(nn_output)
-    xlabel('t'); ylabel('Simulated BFD');
+    xlabel('t'); ylabel('Simulated BFD'); 
     title('Output of closed loop simulations using learned model')
+    ylim([124.8 125.5])
 
     subplot(3,1,2)
     plot(Kd_output_array)
-    xlabel('T'); ylabel('Controller Output');
-    title('Controller Outputs')
+    xlabel('T'); ylabel('Capstan Speed');
+    title('Kd Controller Output')
+    ylim([1400 2800])
 
     subplot(3,1,3)
     plot(Kd_input_array)
-    xlabel('T'); ylabel('Controller Input');
-    title('Controller Input / BFD Error')
+    xlabel('T'); ylabel('BFD Error');
+    title('Kd Controller Input')
+    ylim([-0.2 0.5])
+    
+%     subplot(4,1,4)
+%     plot(Kt_output_array)
+%     xlabel('T'); ylabel('Capstan Speed');
+%     title('Kt Controller Output')
+%     ylim([-0.2 0.5])
+
+%     subplot(4,1,5)
+%     plot(Kt_input_array)
+%     xlabel('T'); ylabel('Tension Error');
+%     title('Kt Controller Input')
+%     ylim([-0.2 0.5])
+    
     latexify_plot;
 
     saveas(fig, sprintf('%s\\%i', folder_name, subbatch),'png');
