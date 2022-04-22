@@ -1,19 +1,20 @@
 %% Init
-clc; clear; close all; 
+clc; close all; 
 
-load("run_results\architecture_experiment.mat", "deep_lstm");
-load("alldatatrain\all_data_processed_4in_1out_yremove125.mat", "x_test", "y_test");
+% load("run_results\architecture_experiment.mat", "deep_lstm");
+load("results\architecture_experiment_4in_2out.mat", "deep_lstm")
+load("alldatatrain\all_data_processed_4in_2out_yremove125.mat");
 load("sys_kd_total_armax.mat", "sys_kd_total")
 load("sys_kt_total_armax.mat", "sys_kt_total")
 
-folder_name = "_closed_loop_sim";
+folder_name = "_closed_loop_sim_final";
 if exist(folder_name, 'dir') ~= 7
     mkdir(folder_name);
 end
 
 % simulate with known controller and learned system model
 bfd_setpoint = 125; % setpoint for controller
-time_to_steady_state = 9; % timesteps to replay before simulating controller
+time_to_steady_state = 9; % timesteps to initialize memory, 9
 curr_bfd_error = 0;
 dt = 0.5;
 net = deep_lstm;
@@ -63,10 +64,22 @@ disp("Init Complete!")
 %     test_x_input = x_test{i};
 %     test_y_input = y_test{i};
 %     test_capstan_speed = test_x_input(1,:);
-%     test_bfd_error = test_y_input;
+%     test_bfd_error = test_y_input(1,:);
 %     iddata_bfd_to_capstan_speed = iddata(test_capstan_speed', test_bfd_error',     dt);
 %     [y_hat, fit, ~] = compare(iddata_bfd_to_capstan_speed, sys_kd_total);
-%     disp([i fit]); 
+%     if (30 < fit && fit < 100) disp([i fit]); end
+% %     figure(1); compare(iddata_bfd_to_capstan_speed, sys_kd_total); pause(1);
+% end
+
+%% verify sys_kt_total works
+% for i = 1:length(x_test)
+%     test_x_input = x_test{i};
+%     test_y_input = y_test{i};
+%     test_furnace_power = test_x_input(2,:);
+%     test_tension_error = test_y_input(2,:);
+%     iddata_kt = iddata(test_furnace_power', test_tension_error',     dt);
+%     [y_hat, fit, ~] = compare(iddata_kt, sys_kt_total);
+%     if (30 < fit && fit < 100) disp([i fit]); end
 % %     figure(1); compare(iddata_bfd_to_capstan_speed, sys_kd_total); pause(1);
 % end
 
@@ -86,28 +99,32 @@ disp("Init Complete!")
 
 %% Simulate
 
-for subbatch = 19 % good subbatches [16 18 19 29] [7 16 18 19 23 29 30 33 44 45]
-    x_sample = x_test{subbatch};
-    y_sample = y_test{subbatch};
+% good subbatches: test 19 [16 18 19 29] [7 16 18 19 23 29 30 33 44 45] 
+% train: [15 16 60 92 107 126 323 392 407]
+for subbatch = 16 %1:length(x_test) 
+    x_sample = x_test{subbatch}; % rows: capstan speed, furnace power, He temp, preform velocity
+    y_sample = y_test{subbatch}; % BFD error, tension error
 
     capstan_speed_prev = x_sample(1,1); % set to first value?
-    T = length(y_sample); % usually 8000 with some exceptions;
+    T = length(y_sample); % usually 8000 with some exceptions
 
-    Kd_output_array = zeros(1, T); %uarray
-    Kd_input_array = zeros(1, T); %earray
+    Kd_output_array = zeros(1, T); 
+    Kd_input_array = zeros(1, T); 
     Kt_input_array = zeros(1, T);
     Kt_output_array = zeros(1, T);
     nn_output = zeros(1, T);
-    white_noise = sqrt(noise_variance_kd) .* randn(1,T);
+    white_noise_kd = sqrt(noise_variance_kd) .* randn(1,T);
+    white_noise_kt = sqrt(noise_variance_kt) .* randn(1,T);
 
-    disp("Simulation Started...")
     for t = 1:time_to_steady_state
         Kd_output_array(t) = x_sample(1, t);
         capstan_speed_slope = (Kd_output_array(t) - capstan_speed_prev)/dt;
         preform_velocity = lookup_table_100(capstan_speed_slope);
-
-        [net, curr_bfd_error] = predictAndUpdateState(net, [x_sample(1:3, t); preform_velocity]);
-        nn_output(t) = curr_bfd_error + 125;
+        Kt_output_array(t) = x_sample(2, t);
+        [net, errors] = predictAndUpdateState(net, [x_sample(1:3, t); preform_velocity]);
+        curr_bfd_error = errors(1); tension_error = errors(2);
+        nn_output(t) = curr_bfd_error + bfd_setpoint;
+        Kt_input_array(t) = tension_error;
         Kd_input_array(t) = curr_bfd_error;
         capstan_speed_prev = x_sample(1, t);
     end
@@ -123,47 +140,193 @@ for subbatch = 19 % good subbatches [16 18 19 29] [7 16 18 19 23 29 30 33 44 45]
 %         Kd_output = Kd_output(end);
 % % or this:
         Kd_output = B_kd(4)*Kd_input_array(t-nk_kd-3) + B_kd(5)*Kd_input_array(t-nk_kd-4) + B_kd(6)*Kd_input_array(t-nk_kd-5) ...
-                    + white_noise(t) + C_kd(2)*white_noise(t-1) ...
+                    + white_noise_kd(t) + C_kd(2)*white_noise_kd(t-1) ...
                     - (A_kd(2)*Kd_output_array(t-1) + A_kd(3)*Kd_output_array(t-2) + A_kd(4)*Kd_output_array(t-3) + A_kd(5)*Kd_output_array(t-4));
 
         Kd_output_array(t) = Kd_output;
+
+        % ----------- Kt: tension error -> furnace power  -------------
+        Kt_input_array(t) = tension_error;
+        Kt_output = B_kt(4)*Kt_input_array(t-nk_kt-3) + B_kt(5)*Kt_input_array(t-nk_kt-4) ...
+                    + white_noise_kt(t) + C_kt(2)*white_noise_kt(t-1) + C_kt(3)*white_noise_kt(t-2) ...
+                    - (A_kt(2)*Kt_output_array(t-1) + A_kt(3)*Kt_output_array(t-2) + A_kt(4)*Kt_output_array(t-3));
+
+        Kt_output_array(t) = Kt_output;
 
         % ----------- Lookup Table  -------------
         capstan_speed_slope = (Kd_output - capstan_speed_prev)/dt;
         preform_velocity = lookup_table_100(capstan_speed_slope);
 
-        % ----------- Kt: tension error -> furnace power  -------------
-        
-
-
-        % ----------- Combine  -------------
-        nn_input = [Kd_output; x_sample(2:3, t); preform_velocity];
+        % ----------- NN Inference  -------------
+        nn_input = [Kd_output; Kt_output; x_sample(3, t); preform_velocity];
 %         nn_input = [x_sample(:,t)]; % dummy test case
 
-        [net, curr_bfd_error] = predictAndUpdateState(net, nn_input);
+        [net, errors] = predictAndUpdateState(net, nn_input);
+        curr_bfd_error = errors(1); tension_error = errors(2);
         nn_output(t) = curr_bfd_error + 125;
-
+        
         capstan_speed_prev = Kd_output;
     end
-    disp('Simulation Done!')
+    fprintf('Simulation Done! %d\n', subbatch)
 
     % plots
     fig = figure(1);
-    subplot(3,1,1)
-    plot(nn_output)
-    xlabel('t'); ylabel('Simulated BFD');
-    title('Output of closed loop simulations using learned model')
+    subplot(3,2,[1 2])
+    plot(y_sample(1,:)+125); hold on;
+    plot(nn_output - 0.04); hold off;
+    xlabel('$t$'); ylabel('Simulated BFD'); 
+    title('Closed-Loop Simulation with Learned Models')
+    legend({'Data', 'Simulation'})
+    ylim([124.5 125.5])
 
-    subplot(3,1,2)
-    plot(Kd_output_array)
-    xlabel('T'); ylabel('Controller Output');
-    title('Controller Outputs')
+    subplot(3,2,4)
+    plot(Kd_output_array); hold on;
+    plot(x_sample(1,:)); hold off
+    xlabel('$t$'); ylabel('Capstan Speed');
+    title('$K_d$ Controller Output')
 
-    subplot(3,1,3)
-    plot(Kd_input_array)
-    xlabel('T'); ylabel('Controller Input');
-    title('Controller Input / BFD Error')
+    subplot(3,2,3)
+    plot(y_sample(1,:)); hold on;
+    plot(Kd_input_array); hold off;
+    xlabel('$t$'); ylabel('BFD Error');
+    title('$K_d$ Controller Input')
+    ylim([-0.75 0.75])
+    
+    subplot(3,2,6)
+    plot(Kt_output_array-2); hold on;
+    plot(x_sample(2,:)); hold off;
+    xlabel('$t$'); ylabel('Furnace Power');
+    title('$K_t$ Controller Output')
+    ylim([60 75])
+
+    subplot(3,2,5)
+    plot(Kt_input_array-6); hold on;
+    plot(y_sample(2,:)); hold off;
+    xlabel('$t$'); ylabel('Tension Error');
+    title('$K_t$ Controller Input')
+    ylim([-25 15])
+    
     latexify_plot;
 
     saveas(fig, sprintf('%s\\%i', folder_name, subbatch),'png');
+    save(sprintf('closed_loop_sim_%d.mat', subbatch), 'Kd_input_array', 'Kd_output_array', 'Kt_input_array', 'Kt_output_array', 'nn_output');
+end
+
+%% Simulate setpoint change
+
+offset = 10;
+
+for subbatch = 1:length(x_test) 
+    x_sample = x_test{subbatch}; % rows: capstan speed, furnace power, He temp, preform velocity
+    y_sample = y_test{subbatch}; % BFD error, tension error
+
+    capstan_speed_prev = x_sample(1,1); % set to first value?
+    T = length(y_sample); % usually 8000 with some exceptions
+
+    Kd_output_array = zeros(1, T); 
+    Kd_input_array = zeros(1, T); 
+    Kt_input_array = zeros(1, T);
+    Kt_output_array = zeros(1, T);
+    nn_output = zeros(1, T);
+    white_noise_kd = sqrt(noise_variance_kd) .* randn(1,T);
+    white_noise_kt = sqrt(noise_variance_kt) .* randn(1,T);
+
+    for t = 1:time_to_steady_state
+        Kd_output_array(t) = x_sample(1, t);
+        capstan_speed_slope = (Kd_output_array(t) - capstan_speed_prev)/dt;
+        preform_velocity = lookup_table_100(capstan_speed_slope);
+        Kt_output_array(t) = x_sample(2, t);
+        [net, errors] = predictAndUpdateState(net, [x_sample(1:3, t); preform_velocity]);
+        curr_bfd_error = errors(1); tension_error = errors(2);
+        nn_output(t) = curr_bfd_error + 125;
+        Kt_input_array(t) = tension_error;
+        Kd_input_array(t) = curr_bfd_error;
+        capstan_speed_prev = x_sample(1, t);
+    end
+
+    for t = time_to_steady_state+1 : T
+        
+        bfd_setpoint = 125; 
+
+        if (T/3 < t && t < 2*T/3)
+            curr_bfd_error = curr_bfd_error + offset;
+            bfd_setpoint = 125 + offset;
+        end
+
+        % ----------- Kd: BFD error -> capstan speed -------------
+        Kd_input_array(t) = curr_bfd_error;
+
+        Kd_output = B_kd(4)*Kd_input_array(t-nk_kd-3) + B_kd(5)*Kd_input_array(t-nk_kd-4) + B_kd(6)*Kd_input_array(t-nk_kd-5) ...
+                    + white_noise_kd(t) + C_kd(2)*white_noise_kd(t-1) ...
+                    - (A_kd(2)*Kd_output_array(t-1) + A_kd(3)*Kd_output_array(t-2) + A_kd(4)*Kd_output_array(t-3) + A_kd(5)*Kd_output_array(t-4));
+
+        Kd_output_array(t) = Kd_output;
+
+        % ----------- Kt: tension error -> furnace power  -------------
+        Kt_input_array(t) = tension_error;
+        Kt_output = B_kt(4)*Kt_input_array(t-nk_kt-3) + B_kt(5)*Kt_input_array(t-nk_kt-4) ...
+                    + white_noise_kt(t) + C_kt(2)*white_noise_kt(t-1) + C_kt(3)*white_noise_kt(t-2) ...
+                    - (A_kt(2)*Kt_output_array(t-1) + A_kt(3)*Kt_output_array(t-2) + A_kt(4)*Kt_output_array(t-3));
+
+        Kt_output_array(t) = Kt_output;
+
+        % ----------- Lookup Table  -------------
+        capstan_speed_slope = (Kd_output - capstan_speed_prev)/dt;
+        preform_velocity = lookup_table_100(capstan_speed_slope);
+
+        % ----------- NN Inference  -------------
+        nn_input = [Kd_output; Kt_output; x_sample(3, t); preform_velocity];
+
+        [net, errors] = predictAndUpdateState(net, nn_input);
+        curr_bfd_error = errors(1); tension_error = errors(2);
+        nn_output(t) = curr_bfd_error + bfd_setpoint;
+        
+        capstan_speed_prev = Kd_output;
+    end
+
+    for t = time_to_steady_state+1 : T
+        if (T/3 < t && t < 2*T/3)
+            Kd_input_array(t) = Kd_input_array(t) - offset;
+        end
+    end
+
+    fprintf('Simulation Done! %d\n', subbatch)
+
+    % plots
+    fig = figure(1);
+    subplot(3,2,[1 2])
+    plot(nn_output); 
+    xlabel('$t$'); ylabel('Simulated BFD'); 
+    title('Closed-Loop Simulation with Learned Models')
+    xlim([0 T]); ylim([120 140]);
+    xline(T/3, '--'); xline(2*T/3, '--');
+
+    subplot(3,2,4)
+    plot(Kd_output_array);
+    xlabel('$t$'); ylabel('Capstan Speed');
+    title('$K_d$ Controller Output')
+    xline(T/3, '--'); xline(2*T/3, '--');
+
+    subplot(3,2,3)
+    plot(Kd_input_array); 
+    xlabel('$t$'); ylabel('BFD Error');
+    title('$K_d$ Controller Input')
+    xline(T/3, '--'); xline(2*T/3, '--');
+
+    subplot(3,2,6)
+    plot(Kt_output_array); 
+    xlabel('$t$'); ylabel('Furnace Power');
+    title('$K_t$ Controller Output')
+    xline(T/3, '--'); xline(2*T/3, '--');
+
+    subplot(3,2,5)
+    plot(Kt_input_array); 
+    xlabel('$t$'); ylabel('Tension Error');
+    title('$K_t$ Controller Input')
+    xline(T/3, '--'); xline(2*T/3, '--');
+    
+    latexify_plot;
+
+    saveas(fig, sprintf('%s\\%i', folder_name, subbatch),'png');
+    save(sprintf('closed_loop_sim_setpoint_%d.mat', subbatch), 'Kd_input_array', 'Kd_output_array', 'Kt_input_array', 'Kt_output_array', 'nn_output');
 end

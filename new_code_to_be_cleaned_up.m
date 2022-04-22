@@ -74,7 +74,7 @@ if plot_bode
     bodeopt.PhaseMatching = 'on';
     bodeopt.PhaseMatchingFreq = 10^-8;
     bodeopt.PhaseMatchingValue = 0;
-    fig2 = figure(2); set(gcf, 'Position', [1102, -14, 809, 1007])
+    fig2 = figure(2); set(gcf, 'Position', [42 269 805 691])
     hold on; grid on; grid minor; latexify_plot
 end
 
@@ -137,7 +137,7 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
                 if plot_bode
                     fig2 = figure(2); [m,p] = bode(sys_kd, {10^-6, 10});
                     m = m(:); p = p(:); m = 20 * log10(m); p = p - p(1);
-                    bode(sys_kd, {10^-6, 10}, bodeopt); 
+                    bode(sys_kd, {10^-6, 10}, bodeopt); grid on; grid minor;
                 end
             end
 
@@ -147,6 +147,7 @@ end
 
 if plot_bode
     fig2 = figure(2); grid on; grid minor; hold off;
+    title('Bode Plots of Merged Models for K_d Controller')
     saveas(fig2, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'png');  
     saveas(fig2, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'fig');  
 end
@@ -165,7 +166,7 @@ if plot_bode
     bodeopt.PhaseMatching = 'on';
     bodeopt.PhaseMatchingFreq = 10^-8;
     bodeopt.PhaseMatchingValue = 0;
-    fig2 = figure(2); set(gcf, 'Position', [1102, -14, 809, 1007])
+    fig3 = figure(3); set(gcf, 'Position', [42 269 805 691])
     hold on; grid on; grid minor; latexify_plot
 end
 
@@ -191,8 +192,8 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
             sys_kt = armax(iddata_tension_to_power,  orders_kt_armax);
             [y_hat, fit, x0] = compare(iddata_tension_to_power, sys_kt);
 
-%             fprintf('file %d/%d\t subbatch %d/%d %2.4f\n', ...
-%                     file_ind,length(all_files),i,length(XTrainTranspose), fit)
+            fprintf('file %d/%d\t subbatch %d/%d %2.4f\n', ...
+                    file_ind,length(all_files),i,length(XTrainTranspose), fit)
 
             if (65 < abs(fit) && abs(fit) < 100)
                 if plot_residuals
@@ -225,11 +226,11 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
                 end
 
                 if plot_bode
-                    fig2 = figure(2); [m,p] = bode(sys_kt, {10^-6, 10});
+                    fig3 = figure(3); [m,p] = bode(sys_kt, {10^-6, 10});
                     m = m(:); p = p(:); m = 20 * log10(m); p = p - p(1);
-                    max(p)
                     if (m(1) > 11 && max(p) <= 0)
                         bode(sys_kt, {10^-6, 10}, bodeopt); 
+                        grid on; grid minor;
                     end
                 end
             end
@@ -239,9 +240,10 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
 end
 
 if plot_bode
-    fig2 = figure(2); grid on; grid minor; hold off;
-    saveas(fig2, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'png');  
-    saveas(fig2, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'fig');  
+    fig3 = figure(2); grid on; grid minor; hold off;
+    title('Bode Plots of Merged Models for K_t Controller')
+    saveas(fig3, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'png');  
+    saveas(fig3, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'fig');  
 end
 disp('Done!')
 
@@ -265,6 +267,7 @@ y = capstan_speed';
 y_hat = y_hat.OutputData;
 res = y - y_hat;
 [xcres,lags] = xcorr(res,res,'normalized');
+t = linspace(0, length(res)/2, length(res));
 
 fig1 = figure(1); set(gcf, 'Position', [4589.8 -225.4 809.6 1008]); latexify_plot;
 subplot(5,2,[1, 2]); compareplot(iddata_bfd_to_capstan_speed, sys_kd);

@@ -1,5 +1,5 @@
 % parameters
-strDataPath         = 'C:\Users\Victor\Desktop\fiber-draw\MIT_DrawData_48and51\';
+strDataPath         = 'C:\Users\Victor\Desktop\fiber-draw\DT_48_at100ms\';
 strOutputPath       = 'C:\Users\Victor\Desktop\fiber-draw\alldatatrain\';
 % BatchInfo Parameters
 bXLSLoad = 1;
@@ -9,8 +9,8 @@ bPlot_each_preform_on_subplot_with_inrangesubbatches_ = 1;
 loBFD = 124;
 hiBFD = 126;
 nTower = 48; % The tower number 
-subbatchMinLen 	= 2000; % a batch is the same as a preform, multiple 
-subbatchMaxLen  = 8000; % batches (or preforms) are run, one after the 
+subbatchMinLen 	= 2000 * 5; % a batch is the same as a preform, multiple 
+subbatchMaxLen  = 8000 * 5; % batches (or preforms) are run, one after the 
                         % other in the tower. a subbatch is defined as a
                         % contiguous region of production
 x_columns = ["cpspdactval", "frnpwrmv", "hetubetemp", "pfspdactval"]
@@ -56,5 +56,5 @@ x_test = combined_Xdata(test_ind);
 y_test = combined_Ydata(test_ind);
 
 
-save("alldatatrain\all_data_processed_4in_1out_yremove125.mat", "Xdata", "Ydata", ...
+save("alldatatrain\all_data_processed_4in_1out_yremove125_DT48_on100ms.mat", "Xdata", "Ydata", ...
      "x_train", "y_train", "x_test", "y_test", "filenames")

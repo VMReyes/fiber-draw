@@ -12,8 +12,7 @@ end
 
 combined_Xdata = cat(2, Xdata{:});
 
-% Xdata rows: capstan speed, furnace power, He temp, preform velocity
-
+labels = {'Capstan Speed', 'Furnace Power', 'Helium Temperature', 'Preform Velocity'};
 mean_matrix = zeros(length(combined_Xdata),4);
 for i = 1:length(combined_Xdata)
     subbatch = combined_Xdata{i};
@@ -32,36 +31,37 @@ nyq_freq = sampling_freq * 2*3 / 2; % rad/s
 avg_capstan_speed = 2500; % 2500 or 2685
 subbatch_length = 8000;
 
-T = 1/sampling_freq;   % Sampling period    
+T = 1/sampling_freq;   % Sampling period
 L = subbatch_length;   % Length of signal
 t = (0:subbatch_length-1)*T;        % Time vector
 f = sampling_freq*(0:(L/2))/L; % frequency vector
 
-all_w = logspace(-2,log10(nyq_freq),100); % logspace(-3,log10(nyq_freq),100);
-all_A = [500 8 2.5 10]; % 1st, 2nd, 3rd, 4th row
+all_w = logspace(-2,log10(nyq_freq),100);
 all_ffts = cell(4, 1);
 num_peaks_counted = 10;
 significant_peak_ratio = 0.05;
 fit_opt = fitoptions('Method', 'LinearLeastSquares', 'Robust', 'Bisquare');
 
-plot_progress = false;
+plot_progress = true;
 
 if (plot_progress) figure(1); latexify_plot; end
 
 %% generate simulated bode (typical runtime: 2 hrs)
+typical_A = [500 8 2.5 10]; % 1st, 2nd, 3rd, 4th row
+
 for row = 1:4
-    A = all_A(row);
+    A = typical_A(row);
     all_ffts{row} = zeros(length(f), length(all_w));
 
     for j = 1:length(all_w)
         w = all_w(j);
         sine_wave = A * sin(w*t);
-        
+
         % add sine wave to 1st, 2nd, 3rd, 4th row
-        new_Xdata = [ones(1,subbatch_length)*avg_capstan_speed; 
-                     ones(1,subbatch_length)*median2;
-                     ones(1,subbatch_length)*median3; 
-                     ones(1,subbatch_length)*median4];
+        new_Xdata = [ones(1,subbatch_length)*avg_capstan_speed;
+            ones(1,subbatch_length)*median2;
+            ones(1,subbatch_length)*median3;
+            ones(1,subbatch_length)*median4];
 
         new_Xdata(row,:) = new_Xdata(row,:) + sine_wave;
 
@@ -87,25 +87,29 @@ for row = 1:4
         end
 
         all_ffts{row}(:,j) = peaks_plot';
-        
-%         freq_peaks = zeros(1, length(highest_peaks));
-%         for k = 1:length(highest_peaks)
-%             freq_peaks(k) = f(P1 == highest_peaks(k));
-%         end
+
+        %         freq_peaks = zeros(1, length(highest_peaks));
+        %         for k = 1:length(highest_peaks)
+        %             freq_peaks(k) = f(P1 == highest_peaks(k));
+        %         end
 
         if plot_progress
             peaks_plot_progress = ones(size(P1))*nan;
             for ind = 1:length(highest_peaks_inds)
                 peaks_plot_progress(P1 == highest_peaks(ind)) = highest_peaks(ind);
             end
-            subplot(2,1,1); plot(t,y_pred)
+            subplot(2,1,1); plot(t,y_pred);
+            title(sprintf('Plant Output with Sinusoidal %s', labels{row}));
+            xlabel('Time (s)'); ylabel('BFD Error');
             subplot(2,1,2); plot(f,P1); hold on;
             plot(f, peaks_plot_progress, '.', 'MarkerSize', 10); hold off;
             xlimit_ind = find(P1 > 1e-4, 1, 'last');
-            xlim([0, f(xlimit_ind)])
-            pause(0.1)
+            xlim([0, f(xlimit_ind)]);
+            xlabel('Frequency (Hz)'); ylabel('FFT Amplitude');
+            title('FFT of Plant Output');
+            pause(0.01)
         end
-        
+
         fprintf('row: %d\t freq: %d/%d\n', row, j, length(all_w))
     end
 end
@@ -118,18 +122,18 @@ end
 cd(curr_path);
 load([curr_path '\' folder_name '\' 'bode_fft.mat']);
 for row = 1:4
-figure; mesh(all_w/(2*pi), f, all_ffts{row}); 
-latexify_plot;
-set(gca, 'ZLim', get(gca, 'ZLim') .* [0 1] + [7e-6 0]);
-xlabel('Input frequency (Hz)');
-ylabel('Output frequency (Hz)');
-zlabel('FFT Amplitude');
-axis square; grid on; grid minor; box on;
+    figure; mesh(all_w/(2*pi), f, all_ffts{row});
+    latexify_plot;
+    set(gca, 'ZLim', get(gca, 'ZLim') .* [0 1] + [7e-6 0]);
+    title(sprintf('Frequency Response w.r.t. %s', labels{row}))
+    xlabel('Input frequency (Hz)');
+    ylabel('Output frequency (Hz)');
+    zlabel('FFT Amplitude');
+    axis square; grid on; grid minor; box on;
 end
 
 %% gather bode profile of many amplitudes (estimated runtime: 4 hrs)
 all_max_A = [700 10 3 15]; % 1st, 2nd, 3rd, 4th row
-all_w = logspace(-2,log10(nyq_freq),100);
 all_bode_profile = cell(4,1);
 for row = 1:4
     if row == 1
@@ -196,7 +200,6 @@ end
 %% plot bode profile (fft amplitude is different from actual)
 clc; close all;
 load('sim_bode_results\all_bode_profile.mat');
-row_names = {'Capstan Speed', 'Furnace Power', 'Helium Temperature', 'Preform Velocity'};
 colors = {'black', 'red', 'blue', 'magenta'};
 for i = 1:length(all_bode_profile)
     bode_profile = all_bode_profile{i};
@@ -227,7 +230,7 @@ for i = 1:length(all_bode_profile)
 %         hold off;
     end
     hold off;
-    title(sprintf('Bode Plot of %s Input to BFD', row_names{i}));
+    title(sprintf('Bode Plot of %s Input to BFD', labels{i}));
     xlabel('Input Frequency (rad/s)'); ylabel('Amplitude Ratio');
 
 end
