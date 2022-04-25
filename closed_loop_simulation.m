@@ -13,7 +13,7 @@ end
 
 % simulate with known controller and learned system model
 bfd_setpoint = 125; % setpoint for controller
-time_to_steady_state = 9; % timesteps to replay before simulating controller
+time_to_steady_state = 9; % timesteps to initialize memory
 curr_bfd_error = 0;
 dt = 0.5;
 net = deep_lstm;

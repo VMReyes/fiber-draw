@@ -1,4 +1,4 @@
-function [Networklayers] = create_simple_lstm(xTrain, yTrain)
+function [Networklayers] = create_deep_lstm(xTrain, yTrain)
 
 [featureDimension,~] = size(xTrain{1});
 [numResponses, ~] = size(yTrain{1});
