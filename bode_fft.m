@@ -1,10 +1,10 @@
 %% Init
 clc; clear; close all;
-load("run_results\architecture_experiment.mat");
-load("alldatatrain\all_data_processed_4in_1out_yremove125.mat");
 curr_path = 'C:\Users\georg\Desktop\fiber-draw';
 % curr_path = 'D:\GEORGE\fiber-draw';
 cd(curr_path);
+load("run_results\architecture_experiment.mat");
+load("alldatatrain\all_data_processed_4in_1out_yremove125.mat");
 folder_name = 'sim_bode_results';
 if exist(folder_name, 'dir') ~= 7
     mkdir(folder_name);
