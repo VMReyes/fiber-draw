@@ -14,9 +14,9 @@ subbatchMinLen 	= 2000; % a batch is the same as a preform, multiple
 subbatchMaxLen  = 8000; % batches (or preforms) are run, one after the 
                         % other in the tower. a subbatch is defined as a
                         % contiguous region of production
-x_columns = ["cpspdactval", "frnpwrmv", "hetubetemp", "pfspdactval"]
-y_columns = ["barefibrediadisplay"] % keep bfd as first output for batch
-                                    % creation code to work
+x_columns = ["cpspdactval", "frnpwrmv", "hetubetemp", "pfspdactval"];
+y_columns = ["barefibrediadisplay"]; % keep bfd as first output for batch
+                                     % creation code to work
 
 % Subbatch Parameters
 fltLEN = 21; 
@@ -28,7 +28,7 @@ dataFiles = dir(fullfile(strDataPath, "*.csv"));
 Xdata = {};
 Ydata = {};
 for i = 1:15 % Only tower 48 data, 2 months
-    strDataFilename = dataFiles(i).name
+    strDataFilename = dataFiles(i).name;
 
     % get batch info
     [BatchInfo, STRDEF] = stl_load_batchinfo(bXLSLoad, strDataPath, ...

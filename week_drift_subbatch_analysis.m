@@ -20,8 +20,8 @@ for b = 1:length(y_pred)
 %     errors(b) = sum((y_pred{b} - combined_Ydata{b}).^2);
 end
 
-set(groot, 'defaultAxesTickLabelInterpreter','latex');
-set(groot, 'defaultLegendInterpreter','latex');
-set(groot, 'defaultTextInterpreter','latex');
+figure; 
 plot(errors); title('Model RMSE over Time'); 
 ylabel('RMSE'); xlabel('Subbatch')
+xlim([0 length(errors)])
+latexify_plot;

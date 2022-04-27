@@ -2,6 +2,8 @@ load("experiments/low_hi_bfd/low_hi_bfd_all_x_y_data.mat", "all_Xdata", "all_Yda
 
 nets = {};
 infos = {};
+target_x_test = 0;
+target_y_test = 0;
 for i = 1:10
     % get the corresponding data
     Xdata = all_Xdata{i};
@@ -28,9 +30,14 @@ for i = 1:10
 
     nets{end+1} = deep_lstm;
     infos{end+1} = deep_lstm_info;
+    if i == 1
+        target_x_test = x_test;
+        target_y_test = y_test;
+    end
 end
 
-load("alldatatrain\all_data_processed_4in_1out_yremove125.mat", "x_test", "y_test")
+x_test = target_x_test;
+y_test = target_y_test;
 error_matrix = zeros(1,10);
 for i = 1:10
     net = nets{i};

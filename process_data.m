@@ -14,7 +14,7 @@ subbatchMaxLen  = 8000; % batches (or preforms) are run, one after the
                         % other in the tower. a subbatch is defined as a
                         % contiguous region of production
 x_columns = ["cpspdactval", "frnpwrmv", "hetubetemp", "pfspdactval"]
-y_columns = ["barefibrediadisplay"]
+y_columns = ["barefibrediadisplay", "tenncmv"]
 
 % Subbatch Parameters
 fltLEN = 21; 
@@ -56,5 +56,5 @@ x_test = combined_Xdata(test_ind);
 y_test = combined_Ydata(test_ind);
 
 
-save("alldatatrain\all_data_processed_4in_1out_yremove125.mat", "Xdata", "Ydata", ...
+save("alldatatrain\all_data_processed_4in_2out_yremove125.mat", "Xdata", "Ydata", ...
      "x_train", "y_train", "x_test", "y_test", "filenames")
