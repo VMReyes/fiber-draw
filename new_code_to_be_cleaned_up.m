@@ -5,8 +5,8 @@ clear; clc; close all;
 strDataPath = 'C:\Users\georg\Dropbox (MIT)\minigroup_mit_sterlite\from Sterlite\data\MIT_DrawData_48and51\';
 all_files   = dir(strDataPath);
 % curr_path = 'C:\Users\georg\Desktop\MS Research\fiber-draw';
-curr_path   = 'C:\Users\georg\Desktop\fiber-draw';
-% curr_path   = 'D:\GEORGE\fiber-draw';
+% curr_path   = 'C:\Users\georg\Desktop\fiber-draw';
+curr_path   = 'D:\GEORGE\fiber-draw';
 
 % BatchInfo Parameters
 bXLSLoad = 1;
@@ -158,8 +158,8 @@ disp('Done!')
 folder_name = "_analysis_armax_kt";
 cd(curr_path)
 
-plot_residuals = false;
-plot_bode = true;
+plot_residuals = true;
+plot_bode = false;
 
 if plot_bode 
     bodeopt = bodeoptions("cstprefs");
@@ -197,13 +197,13 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
 
             if (65 < abs(fit) && abs(fit) < 100)
                 if plot_residuals
-                    y = capstan_speed';
+                    y = furnace_power';
                     y_hat = y_hat.OutputData;
                     res = y - y_hat;
                     [xcres,lags] = xcorr(res,res,'normalized');
     
-                    fig1 = figure(1); set(gcf, 'Position', [4589.8 -225.4 809.6 1008]); latexify_plot;
-                    subplot(5,2,[1, 2]); compareplot(iddata_bfd_to_capstan_speed, sys_kt);
+                    fig1 = figure(1); set(gcf, 'Position', [ 1111 -11 809 1007]);
+                    subplot(5,2,[1, 2]); compareplot(iddata_tension_to_power, sys_kt);
                     ax = gca; ax.Legend.Location = 'southeast'; 
                     
                     t = linspace(0, length(res)/2, length(res));
@@ -221,6 +221,7 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
                     subplot(5,2,8); histogram(res, 50); title('Residual Histogram')
                     subplot(5,2,9); normplot(res);
                     subplot(5,2,10); plot(lags, xcres); title('Residual Autocorrelation')
+                    latexify_plot;
     
                     saveas(fig1, sprintf('%s\\%s\\%d,%d', curr_path, folder_name, file_ind, i),'png');
                 end
@@ -240,7 +241,7 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
 end
 
 if plot_bode
-    fig3 = figure(2); grid on; grid minor; hold off;
+    fig3 = figure(3); grid on; grid minor; hold off;
     title('Bode Plots of Merged Models for K_t Controller')
     saveas(fig3, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'png');  
     saveas(fig3, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'fig');  

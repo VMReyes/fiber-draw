@@ -193,3 +193,63 @@ title('RMSE Distribution using Tower 51 Model');
 ylabel('Density'); xlabel('RMSE')
 legend({'Tower 48', 'Tower 51'})
 latexify_plot;
+
+%% Freq content
+
+
+folder_name = 'tower_freq';
+if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+for file_ind = 18:length(all_files) % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_file_data{file_ind,1};
+    if ~isempty(curr_file)
+
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
+
+        for i = 1:length(XTrainTranspose)
+            f = figure(2);
+            xs = cell2mat(XTrainTranspose(i)); capstan_speed = xs(1,:);
+            ys = cell2mat(YTrainTranspose(i)) - bfd_setpoint;
+%             net = model48.resetState();
+%             y_pred = net.predict(xs, "MiniBatchSize", 1);
+            t = 0:0.5:floor(length(ys)/2);
+            if (length(t) ~= length(ys)) t = t(1:length(ys)); end
+            subplot(2,1,1); plot(t, ys); % hold on; plot(t, y_pred); hold off;
+%             legend({'Data', 'Prediction'}); 
+            title('Tower 51 BFD')
+            xlabel('Time (s)'); ylabel('BFD Error ($\mu m$)')
+            xlim([0 length(ys)/2])
+            subplot(2,1,2);
+            plot_fft_comparison(ys, ys);
+            latexify_plot;
+            saveas(f, sprintf('%s\\%i,%i', folder_name, file_ind, i),'png')
+        end
+    end
+end
+
+%%
+function plot_fft_comparison(Y, Ypredict)
+    %take the FFT
+    FY = fft(Y);
+    FY_s = fftshift(FY);
+    FYpredict = fft(Ypredict);
+    FYpredict_s = fftshift(FYpredict);
+    
+    %the radial frequencies
+    frq_discretes = 2/length(Y).*([0:(length(Y)-1)]-length(Y)/2);
+    
+    plot(frq_discretes,log10(abs(FY_s).^2),'k');
+    hold on
+    plot(frq_discretes,log10(abs(FYpredict_s).^2),'r');
+    hold off
+    
+    ylabel('Log Magnitude')
+    xlabel('Frequency')
+%     legend('Data', 'Prediction')
+    axis([0 1 -1  max([   max(log10(abs(FY_s).^2))   max(log10(abs(FYpredict_s).^2))   ])   ])
+    title('Power Spectrum');
+end
