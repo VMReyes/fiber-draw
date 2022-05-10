@@ -452,12 +452,6 @@ for subbatch = 1:length(x_test)
                     + white_noise_kt(t) + C_kt(2)*white_noise_kt(t-1) + C_kt(3)*white_noise_kt(t-2) ...
                     - (A_kt(2)*Kt_output_array(t-1) + A_kt(3)*Kt_output_array(t-2) + A_kt(4)*Kt_output_array(t-3));
 
-        Kt_output_array(t) = Kt_output;
-
-        % ----------- Lookup Table  -------------
-        capstan_speed_slope = (Kd_output - capstan_speed_prev)/dt;
-        preform_velocity = lookup_table_100(capstan_speed_slope);
-
         % ----------- NN Inference  -------------
         nn_input = [Kd_output; Kt_output; x_sample(3, t); preform_velocity];
 
@@ -477,10 +471,10 @@ for subbatch = 1:length(x_test)
     fprintf('Simulation Done! %d\n', subbatch)
 
     % plots
+<<<<<<< HEAD
 %     fig = figure(1);
 %     subplot(3,2,[1 2])
 %     plot(nn_output); 
-%     xlabel('$t$'); ylabel('Simulated BFD'); 
 %     title('Closed-Loop Simulation with Learned Models')
 %     xlim([0 T]); ylim([120 140]);
 %     xline(T/3, '--'); xline(2*T/3, '--');
@@ -550,3 +544,7 @@ axis([floor(2*T/3)-10 5800 124.97 125.05])
 latexify_plot
 saveas(fig3, sprintf('%s\\%i-3', 'soft_controller', subbatch), 'png');
 save(sprintf('%s\\%i', 'soft_controller', subbatch),'nn_output');
+=======
+    fig = figure(1);
+    subplot(3,2,[1 2])
+    plot(nn_output); 

@@ -70,7 +70,7 @@ if ~curr_file.isdir
     capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
     bfd = ys(1,:); tension = ys(2,:);
 
-    subplot(2,1,1); plot(bfd-125); title('Input: Bare Fiber Diameter Error'); ylabel('BFD ($\mu m$)')
+    subplot(2,1,1); plot(bfd-125); title('Input: Bare Fiber Diameter Error'); ylabel('BFD Error ($\mu m$)')
     subplot(2,1,2); plot(capstan_speed); title('Output: Capstan Speed'); ylabel('Capstan Speed (m/min)');
     xlabel('Samples'); latexify_plot
 end

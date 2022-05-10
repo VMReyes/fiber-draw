@@ -202,8 +202,8 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
                     res = y - y_hat;
                     [xcres,lags] = xcorr(res,res,'normalized');
     
-                    fig1 = figure(1); set(gcf, 'Position', [4589.8 -225.4 809.6 1008]); latexify_plot;
-                    subplot(5,2,[1, 2]); compareplot(iddata_bfd_to_capstan_speed, sys_kt);
+                    fig1 = figure(1); set(gcf, 'Position', [1109 -11 809 1007]); latexify_plot;
+                    subplot(5,2,[1, 2]); compareplot(iddata_tension_to_power, sys_kt);
                     ax = gca; ax.Legend.Location = 'southeast'; 
                     
                     t = linspace(0, length(res)/2, length(res));
@@ -431,8 +431,131 @@ for i = 32 %1:length(y_test)
 
 end
 
-%% helper functions
+%% plot thesis
+cd(curr_path)
 
+folder_name = "_plot_thesis";
+
+if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+all_capstan_speed = [];
+all_furnace_power = [];
+all_preform_speed = [];
+all_tension = [];
+
+for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
+
+        for i = 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
+            bfd = ys(1,:); tension = ys(2,:);
+            
+            all_capstan_speed = horzcat(all_capstan_speed, capstan_speed);
+            all_furnace_power = horzcat(all_furnace_power, furnace_power);
+            all_preform_speed = horzcat(all_preform_speed, preform_speed);
+            all_tension = horzcat(all_tension, tension);
+
+%             f = figure(1); t = 0:0.5:floor(length(bfd)/2)-0.5;
+%             subplot(4,1,1); plot(t, capstan_speed); xlim([0 8000]); 
+%             subtitle('Capstan Speed'); ylabel('Capstan Speed')
+%             subplot(4,1,2); plot(t, furnace_power); xlim([0 8000]); 
+%             subtitle('Furnace Power'); ylabel('Furnace Power')
+%             subplot(4,1,3); plot(t, preform_speed); xlim([0 8000]); 
+%             subtitle('Preform Velocity'); ylabel('Preform Velocity'); 
+%             subplot(4,1,4); plot(t, tension); xlim([0 8000]); 
+%             subtitle('Tension'); ylabel('Tension'); xlabel('Time (s)')
+%             latexify_plot;
+%             saveas(f, sprintf('%s\\%s\\%d,%d', curr_path, folder_name, file_ind, i),'png')
+        end
+    end
+end
+
+figure(2); title('Distribution of Input Values')
+subplot(4,1,1); histogram(all_capstan_speed, 'BinLimits', [2100 2800])
+subtitle('Capstan Speed'); xlabel('(mm/min)')
+subplot(4,1,2); histogram(all_furnace_power, 'BinLimits', [50 70])
+subtitle('Furnace Power'); xlabel('$(\%)$')
+subplot(4,1,3); histogram(all_preform_speed, 'BinLimits', [-1 5])
+subtitle('Preform Velocity'); xlabel('(m/min)')
+subplot(4,1,4); histogram(all_tension, 'BinLimits', [100 200])
+subtitle('Tension'); xlabel('(g)')
+latexify_plot
+
+%% filter length figure
+cd(curr_path)
+folder_name = "_plot_thesis_filter_length";
+
+if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+for file_ind = 3 % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
+
+        for i = 19 % 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            bfd = ys(1,:); 
+            
+            t = 0:0.5:floor(length(bfd)/2)-0.5;
+            bfd_trunc = bfd(1:4000);
+            figure(3); title('Effect of Filter Length on BFD Output')
+            subplot(3,1,1); plot(bfd_trunc); subtitle('Filter Length = 1 (Unfiltered)')
+            subplot(3,1,2); plot(sliding_window(bfd_trunc, 7)); subtitle('Filter Length = 7')
+            subplot(3,1,3); plot(sliding_window(bfd_trunc, 25)); subtitle('Filter Length = 25')
+            latexify_plot;
+            saveas(f, sprintf('%s\\%s\\%d,%d', curr_path, folder_name, file_ind, i),'png')
+        end
+    end
+end
+
+%% tower figure - freq different
+cd(curr_path)
+folder_name = "_plot_thesis_tower";
+
+if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+for file_ind = 18:length(all_files) % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
+
+        for i = 19 % 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            bfd = ys(1,:); 
+            
+            t = 0:0.5:floor(length(bfd)/2)-0.5;
+            figure(4); 
+            
+            latexify_plot;
+            saveas(f, sprintf('%s\\%s\\%d,%d', curr_path, folder_name, file_ind, i),'png')
+        end
+    end
+end
+
+
+
+%% helper functions
 function output = sliding_window(x, WindowLength)
 
     output = zeros(length(x)-WindowLength,1);
@@ -443,7 +566,6 @@ function output = sliding_window(x, WindowLength)
     end
 
 end
-
 
 function plot_fft_comparison(Y, Ypredict)
     %take the FFT
