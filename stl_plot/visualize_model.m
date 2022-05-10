@@ -1,7 +1,7 @@
 function visualize_model(x_test, y_test, net)
 
 reset_net = net.resetState();
-y_test_net_pred = reset_net.predict(x_test, "MiniBatchSize",2);
+y_test_net_pred = reset_net.predict(x_test, "MiniBatchSize",1);
 
 % tiledlayout(3,2);
 % for i = 1:3

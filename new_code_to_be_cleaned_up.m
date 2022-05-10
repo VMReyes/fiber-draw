@@ -289,7 +289,285 @@ subplot(5,2,8); histogram(res, 50); title('Residual Histogram')
 subplot(5,2,9); normplot(res);
 subplot(5,2,10); plot(lags, xcres); title('Residual Autocorrelation')
 
+%% table to graph
+data =  [7.1883  7.9245  9.5703 11.2197;
+ 7.6234  8.1328  9.6085 11.1611 ;
+7.9734  8.1757  9.3822  10.7667 ;
+8.1633 8.3432  9.3241  10.5022];
+
+figure; plot([1 3 5 7],data(4,:),'ko-'); hold on; 
+plot([1 3 5 7],data(1,:),'r.', 'MarkerSize', 15); 
+plot([1 3 5 7],data(1,:),'r', 'MarkerSize', 15); 
+hold off;
+xticks([1 3 5 7]); xlabel('Filter Length')
+xlim([0 8])
+ylabel('RMSE')
+legend({'Model Filter Length = 7', 'Model Filter Length = 1'})
+latexify_plot
+
+%% bfd thresholds
+load('alldatatrain/all_data_processed_4in_1out_yremove125_partial.mat');
+t = 0:0.5:length(y_test{4})/2-0.5;
+fig5 = figure(5); plot(t, flip(y_test{4} + 125))
+xlim([0 t(end)])
+xlabel('Time (s)'); ylabel('BFD')
+latexify_plot
+title('Subbatch with Thresholds 115 - 135')
+% 
+% load('alldatatrain/all_data_processed_4in_1out_yremove125.mat');
+% t = 0:0.5:length(y_test{1})/2-0.5;
+% fig5 = figure(5); plot(t, flip(y_test{1} + 125))
+% xlim([0 t(end)])
+% xlabel('Time (s)'); ylabel('BFD')
+% latexify_plot
+% title('Subbatch with Thresholds 124 - 126')
+%%  threshold viz
+load('C:\Users\Victor\Desktop\fiber-draw\run_results\lohi_bfd_experiment.mat', 'nets')
+load('C:\Users\Victor\Desktop\fiber-draw\alldatatrain\all_data_processed_4in_1out.mat')
+for week_ind = 1:length(Xdata)
+    for subbatch = 1:length(Xdata{week_ind})
+        y_pred = nets{1}.predict(Xdata{week_ind}{subbatch});
+        figure(1); plot(Ydata{week_ind}{subbatch}); hold on;
+        plot(y_pred+125); hold off;
+        latexify_plot
+        pause(0.5)
+    end
+end
+
+%%
+load("alldatatrain\all_data_processed_4in_1out_yremove125.mat");
+load('C:\Users\Victor\Desktop\fiber-draw\run_results\filter_len_experiment.mat', 'nets')
+
+folder_name1 = '_filter_len_graphs_filt1';
+if exist(folder_name1, 'dir') ~= 7
+    mkdir(folder_name1);
+end
+
+folder_name7 = '_filter_len_graphs_filt7';
+if exist(folder_name7, 'dir') ~= 7
+    mkdir(folder_name7);
+end
+
+net_filt1 = nets{1};
+net_filt3 = nets{2};
+net_filt5 = nets{3};
+net_filt7 = nets{4};
+
+%%
+reset_net1 = net_filt1.resetState();
+y_test_net_pred = reset_net1.predict(x_train, "MiniBatchSize",1);
+disp('done inference 1!')
+
+reset_net7 = net_filt7.resetState();
+y_test_net_pred7 = reset_net7.predict(x_train, "MiniBatchSize",1);
+
+disp('done inference 7!')
+%%
+
+for i = 243% 1:length(y_train)
+
+%     nexttile;
+%     plot(y_test{i}); hold on;
+%     plot(y_test_net_pred{i}); hold off;
+%     title('Actual Vs. Predicted BFD on Testing Data');
+%     ylim([-0.2 0.2]);
+
+    fig1 = figure(1); set(fig1, 'Position', [1021 405 814 478]);
+    subplot(2,1,1)
+    plot(sliding_window(y_train{i}, 20),'b'); hold on;
+    plot(y_test_net_pred7{i},'r'); hold off;
+    title('BFD Error Predicted by Filtered Model');
+    legend('Actual (smoothed)', 'Prediction')
+    xlabel('Time (samples)'); ylabel('BFD Error ($\mu m$)')
+%     ylim([-0.075 0.075]);
+
+    subplot(2,1,2)
+    plot_fft_comparison(y_train{i}, y_test_net_pred7{i})
+    latexify_plot
+    saveas(fig1, sprintf('%s\\%d', folder_name7, i), 'png')
+    disp(i)
+end
+%%
+for i = 43 %1:length(y_train)
+    fig2 = figure(2); set(fig2, 'Position', [1021 405 814 478]);
+    subplot(2,1,1)
+    plot(sliding_window(y_train{i}, 20),'b'); hold on;
+    plot(y_test_net_pred{i},'r'); hold off;
+    title('BFD Error Predicted by Unfiltered Model');
+    legend('Actual (smoothed)', 'Prediction')
+    xlabel('Time (samples)'); ylabel('BFD Error ($\mu m$)')
+    ylim([-0.1 0.3]);
+
+    subplot(2,1,2)
+    plot_fft_comparison(y_train{i}, y_test_net_pred{i})
+    latexify_plot
+    saveas(fig1, sprintf('%s\\%d', folder_name1, i), 'png')
+    disp(i)
+
+end
+
+%%
+load('C:\Users\Victor\Desktop\fiber-draw\results\architecture_experiment_4in_2out.mat')
+load('C:\Users\Victor\Desktop\fiber-draw\alldatatrain\all_data_processed_4in_2out_yremove125.mat')
+reset_net1 = deep_lstm.resetState();
+y_test_net_pred = reset_net1.predict(x_test, "MiniBatchSize",1);
+disp('done inference!')
+%%
+
+for i = 32 %1:length(y_test)
+    fig3 = figure(3); set(fig3, 'Position', [1021 405 814 478]);
+    subplot(2,1,1)
+    plot(sliding_window(y_test{i}(2,:), 20),'b'); hold on;
+    plot(y_test_net_pred{i}(2,:),'r'); hold off;
+    title('Tension Error Predicted by Deep LSTM Network');
+    legend('Actual (smoothed)', 'Prediction')
+    xlabel('Time (samples)'); ylabel('Tension Error (g)')
+%     ylim([-0.1 0.3]);
+
+    subplot(2,1,2)
+    plot_fft_comparison(y_test{i}(2,:), y_test_net_pred{i}(2,:))
+    latexify_plot
+    saveas(fig3, sprintf('%s\\%d', 'tension_plots', i), 'png')
+    disp(i)
+
+end
+
+%% plot thesis
+cd(curr_path)
+
+folder_name = "_plot_thesis";
+
+if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+all_capstan_speed = [];
+all_furnace_power = [];
+all_preform_speed = [];
+all_tension = [];
+
+for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
+
+        for i = 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            capstan_speed = xs(1,:); furnace_power = xs(2,:); preform_speed = xs(3,:);
+            bfd = ys(1,:); tension = ys(2,:);
+            
+            all_capstan_speed = horzcat(all_capstan_speed, capstan_speed);
+            all_furnace_power = horzcat(all_furnace_power, furnace_power);
+            all_preform_speed = horzcat(all_preform_speed, preform_speed);
+            all_tension = horzcat(all_tension, tension);
+
+%             f = figure(1); t = 0:0.5:floor(length(bfd)/2)-0.5;
+%             subplot(4,1,1); plot(t, capstan_speed); xlim([0 8000]); 
+%             subtitle('Capstan Speed'); ylabel('Capstan Speed')
+%             subplot(4,1,2); plot(t, furnace_power); xlim([0 8000]); 
+%             subtitle('Furnace Power'); ylabel('Furnace Power')
+%             subplot(4,1,3); plot(t, preform_speed); xlim([0 8000]); 
+%             subtitle('Preform Velocity'); ylabel('Preform Velocity'); 
+%             subplot(4,1,4); plot(t, tension); xlim([0 8000]); 
+%             subtitle('Tension'); ylabel('Tension'); xlabel('Time (s)')
+%             latexify_plot;
+%             saveas(f, sprintf('%s\\%s\\%d,%d', curr_path, folder_name, file_ind, i),'png')
+        end
+    end
+end
+
+figure(2); title('Distribution of Input Values')
+subplot(4,1,1); histogram(all_capstan_speed, 'BinLimits', [2100 2800])
+subtitle('Capstan Speed'); xlabel('(mm/min)')
+subplot(4,1,2); histogram(all_furnace_power, 'BinLimits', [50 70])
+subtitle('Furnace Power'); xlabel('$(\%)$')
+subplot(4,1,3); histogram(all_preform_speed, 'BinLimits', [-1 5])
+subtitle('Preform Velocity'); xlabel('(m/min)')
+subplot(4,1,4); histogram(all_tension, 'BinLimits', [100 200])
+subtitle('Tension'); xlabel('(g)')
+latexify_plot
+
+%% filter length figure
+cd(curr_path)
+folder_name = "_plot_thesis_filter_length";
+
+if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+for file_ind = 3 % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
+
+        for i = 19 % 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            bfd = ys(1,:); 
+            
+            t = 0:0.5:floor(length(bfd)/2)-0.5;
+            bfd_trunc = bfd(1:4000);
+            figure(3); title('Effect of Filter Length on BFD Output')
+            subplot(3,1,1); plot(bfd_trunc); subtitle('Filter Length = 1 (Unfiltered)')
+            subplot(3,1,2); plot(sliding_window(bfd_trunc, 7)); subtitle('Filter Length = 7')
+            subplot(3,1,3); plot(sliding_window(bfd_trunc, 25)); subtitle('Filter Length = 25')
+            latexify_plot;
+            saveas(f, sprintf('%s\\%s\\%d,%d', curr_path, folder_name, file_ind, i),'png')
+        end
+    end
+end
+
+%% tower figure - freq different
+cd(curr_path)
+folder_name = "_plot_thesis_tower";
+
+if exist(folder_name, 'dir') ~= 7
+    mkdir(folder_name);
+end
+
+for file_ind = 18:length(all_files) % 1:16 for tower 48, 18:length(all_files) for tower 51
+    curr_file = all_files(file_ind);
+    if ~curr_file.isdir
+
+        % load from loaded data
+        XTrainTranspose = all_file_data{file_ind,1};
+        YTrainTranspose = all_file_data{file_ind,2};
+
+        for i = 19 % 1:length(XTrainTranspose)
+            xs = cell2mat(XTrainTranspose(i));
+            ys = cell2mat(YTrainTranspose(i));
+            bfd = ys(1,:); 
+            
+            t = 0:0.5:floor(length(bfd)/2)-0.5;
+            figure(4); 
+            
+            latexify_plot;
+            saveas(f, sprintf('%s\\%s\\%d,%d', curr_path, folder_name, file_ind, i),'png')
+        end
+    end
+end
+
+
+
 %% helper functions
+function output = sliding_window(x, WindowLength)
+
+    output = zeros(length(x)-WindowLength,1);
+    
+    for idx = 1:length(x)-WindowLength
+        Block = x(idx:idx+WindowLength);
+        output(idx) = mean(Block);
+    end
+
+end
+
 function plot_fft_comparison(Y, Ypredict)
     %take the FFT
     FY = fft(Y);
@@ -307,8 +585,10 @@ function plot_fft_comparison(Y, Ypredict)
     hold off
     
     ylabel('Log Magnitude')
-    xlabel('Frequency')
+    xlabel('Frequency (Hz)')
     legend('Data', 'Prediction')
-    axis([0 1 -.1  max([   max(log10(abs(FY_s).^2))   max(log10(abs(FYpredict_s).^2))   ])   ])
+    xlim([0 1])
+    ylim([-2 5])
+%     axis([0 1 -.1  max([   max(log10(abs(FY_s).^2))   max(log10(abs(FYpredict_s).^2))   ])   ])
     title('Power Spectrum');
 end
