@@ -84,9 +84,9 @@ visualize_model(x_test, unfiltered_y_test, nets{3});
 visualize_model(x_test, unfiltered_y_test, nets{4});
 
 error_matrix = zeros(4,4);
-for i = 1:4
-    net = nets{i};
-    for j = 1:4
+for i = 1% 1:4 % model filter
+    net = nets{i}; 
+    for j = 1%1:4 % data filter
         input_data = x_test;
         output_data = y_data_with_varying_filter{j};
         output_data = cat(2, output_data{:});
@@ -104,3 +104,17 @@ for i = 1:4
 end
 
 save("run_results/filter_len_experiment.mat");
+
+%% scratch
+for i = 2% 1:4 % model filter
+    net = nets{i}; 
+    for j = 4%1:4 % data filter
+        input_data = x_test;
+        output_data = y_data_with_varying_filter{j};
+        output_data = cat(2, output_data{:});
+        output_data = output_data(test_ind);
+        figure(1); plot(output_data{b}); hold on;
+        plot(model_prediction); hold off; 
+        latexify_plot
+    end
+end
