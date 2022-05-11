@@ -147,13 +147,13 @@ end
 
 if plot_bode
     fig2 = figure(2); grid on; grid minor; hold off;
-    title('Bode Plots of Merged Models for K_d Controller')
+    title('Bode Plots of Merged Models for BFD Controller')
     saveas(fig2, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'png');  
     saveas(fig2, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'fig');  
 end
 disp('Done!')
 
-%% PLOT ANALYSIS (kt)
+% PLOT ANALYSIS (kt)
 
 folder_name = "_analysis_armax_kt";
 cd(curr_path)
@@ -240,8 +240,8 @@ for file_ind = 1:16 % 1:16 for tower 48, 18:length(all_files) for tower 51
 end
 
 if plot_bode
-    fig3 = figure(2); grid on; grid minor; hold off;
-    title('Bode Plots of Merged Models for K_t Controller')
+    fig3 = figure(3); grid on; grid minor; hold off;
+    title('Bode Plots of Merged Models for Tension Controller')
     saveas(fig3, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'png');  
     saveas(fig3, sprintf('%s\\%s\\all_bode', curr_path, folder_name),'fig');  
 end
