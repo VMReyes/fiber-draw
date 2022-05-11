@@ -1,6 +1,6 @@
 # fiber-draw
 
-This repository contains various experiments that explore how to use an LSTM network to model the fiber draw process.
+This repository contains various experiments that explore how to use an LSTM network to model the fiber draw process. This codebase contains legacy code written by Brian Anthony. 
 
 ## First Steps
 
@@ -49,3 +49,15 @@ It also outputs the info data structure which contains training performance hist
 
 To visualize models, we are currently building up `visualize_model.m`.
 It takes in data and a model and performs inference and plots against the true values.
+
+## System Identification Pipeline
+
+In `sys_id_pipeline.m`, the main section contains code for the grid search process and merging models. Helper functions are defined below, implementing the algorithm mentioned in my thesis. 
+
+`load_data()` iterates through all files in the folder, creates subbatches and stores it in a cell array called `all_file_data`. For the first time, this process takes hours to run, so storing it as a `.mat` file would be time-saving. 
+
+`grid_search_oe()` and `grid_search_armax()` functions perform the grid search process in nested for loops. The arguments are controller name (either`'kd'` or `'kt'`), upper bound of the order (set to be 10 in this study), and a boolean indicating if the time- and frequency- domain plots are displayed (useful for debugging but slows the process). These functions return the number of "good" subbatches and the average accuracy for each fixed order. 
+
+The `merge_models()` function similarly takes in the controller name (either`'kd`' or `'kt`'), model structure name (either `'oe'` or `'armax'`), the selected model order after reviewing all models, and the boolean flag for plotting (see above). Of particular importance is the `all_iddata` it produces, which is a data structure containing all subbatches as experiments which `oe()` and `armax()` can fit to. A `.mat` file containing the merged model is saved to the current folder. 
+
+If you'd prefer to see the above in a script-like code instead of wrapped functions, see `sys_id_pipeline_old.m`. It's less clean as portions of the code are copy-pasted many times, but it's easier to debug. 
